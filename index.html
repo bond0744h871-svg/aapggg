@@ -3,28 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>跨越時空大冒險 ── 大冒險地圖</title>
+    <title>打怪 RPG 知識問答挑戰 ── 勇者與魔王</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-page: #0a0915;
-            --bg-card: rgba(22, 19, 41, 0.65);
-            --bg-modal: rgba(20, 18, 38, 0.95);
+            --bg-page: #08070d;
+            --bg-phone: #121021;
+            --bg-darker: #0c0b15;
             --text-primary: #f1f0fb;
-            --text-muted: #79739a;
+            --text-muted: #6b6684;
             
+            /* UI Colors */
+            --hp-green: #2ecc71;
+            --hp-yellow: #f1c40f;
+            --hp-red: #e74c3c;
+            --gold-color: #ffd700;
             --accent-cyan: #00e5ff;
             --accent-pink: #ff007f;
-            --accent-gold: #ffd700;
-            --completed-green: #2ecc71;
             
             --glass-border: rgba(255, 255, 255, 0.06);
-            --font-primary: 'Noto Sans TC', sans-serif;
-            --font-heading: 'Orbitron', sans-serif;
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --radius-phone: 36px;
+            --radius-ui: 14px;
         }
 
         * {
@@ -38,793 +40,1180 @@
         body {
             background-color: var(--bg-page);
             color: var(--text-primary);
-            font-family: var(--font-primary);
+            font-family: 'Noto Sans TC', sans-serif;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.04) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.04) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(20, 18, 38, 1) 0%, var(--bg-page) 100%);
-            padding: 2rem 1rem;
-        }
-
-        /* 1. Cover Overlay Screen */
-        .cover-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 3000;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: opacity 0.6s ease-out, visibility 0.6s;
             overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.05) 0%, transparent 45%);
+            padding: 1rem;
         }
 
-        .cover-image {
+        /* Handheld phone mockup container */
+        .phone-wrapper {
+            background: var(--bg-phone);
+            border: 4px solid #25223d;
+            border-radius: var(--radius-phone);
+            box-shadow: 
+                0 0 30px rgba(0, 229, 255, 0.08),
+                0 25px 60px rgba(0, 0, 0, 0.85);
             width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background-color: #000;
+            max-width: 410px;
+            height: 90vh;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 8px solid #1a182c;
         }
 
-        .cover-prompt {
+        /* Notch */
+        .phone-notch {
+            width: 130px;
+            height: 22px;
+            background: #25223d;
             position: absolute;
-            bottom: 8%;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 1.35rem;
+            border-bottom-left-radius: 14px;
+            border-bottom-right-radius: 14px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .notch-camera {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #08070d;
+        }
+
+        .notch-speaker {
+            width: 44px;
+            height: 4px;
+            border-radius: 20px;
+            background: #08070d;
+        }
+
+        /* Screen Shake Animation */
+        .shake {
+            animation: phone-shake-anim 0.3s ease-in-out;
+        }
+
+        @keyframes phone-shake-anim {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 50%, 90% { transform: translate(-4px, 2px); }
+            30%, 70% { transform: translate(4px, -2px); }
+        }
+
+        /* Loading Screen overlay */
+        .loading-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-phone);
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.08);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header Stat Info Bar */
+        .game-header {
+            padding: 2.5rem 1.25rem 0.8rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(12, 11, 21, 0.6);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+        }
+
+        .level-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+        }
+
+        .gold-counter {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            padding: 0.35rem 0.8rem;
+            border-radius: 100px;
+            font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 229, 255, 0.5);
-            animation: pulse 1.5s infinite alternate;
+            font-size: 1rem;
+            color: var(--gold-color);
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        @keyframes pulse {
-            from { opacity: 0.4; }
-            to { opacity: 1; }
+        .gold-counter.bounce {
+            transform: scale(1.3);
+            background: rgba(255, 215, 0, 0.2);
         }
 
-        /* Top Header Area */
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-            width: 100%;
-            max-width: 1000px;
+        /* Game Screen Area */
+        .game-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1.25rem;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* Battle Ground (Avatars + HP Bars) */
+        .battle-arena {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-ui);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        /* Red flash when critical */
+        .battle-arena.critical-flash {
+            animation: crit-red-flash-anim 0.3s;
+        }
+
+        @keyframes crit-red-flash-anim {
+            0%, 100% { border-color: var(--glass-border); box-shadow: none; }
+            50% { border-color: var(--hp-red); box-shadow: 0 0 25px var(--hp-red); }
+        }
+
+        /* Green flash when correct */
+        .battle-arena.correct-flash {
+            animation: correct-green-flash-anim 0.2s;
+        }
+
+        @keyframes correct-green-flash-anim {
+            0%, 100% { border-color: var(--glass-border); }
+            50% { border-color: var(--hp-green); }
+        }
+
+        .fighter-box {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0.5rem;
-        }
-
-        .header-title-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.8rem;
-        }
-
-        .header-emoji {
-            font-size: 2.2rem;
-            animation: bounce 2s infinite;
-        }
-
-        header h1 {
-            font-family: var(--font-heading);
-            font-size: 2.5rem;
-            font-weight: 900;
-            letter-spacing: 3px;
-            color: var(--text-primary);
-            background: linear-gradient(135deg, #fff 30%, var(--accent-cyan) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
-        }
-
-        header p {
-            color: var(--text-muted);
-            font-size: 1.05rem;
-            letter-spacing: 1px;
-            max-width: 500px;
-        }
-
-        /* Consolidated Top Right Info Bar */
-        .top-info-bar {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            background: rgba(22, 19, 41, 0.7);
-            border: 1px solid var(--glass-border);
-            padding: 0.6rem 1.2rem;
-            border-radius: 12px;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-
-        .info-badges-count {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            letter-spacing: 0.5px;
-        }
-
-        .info-badges-count span {
-            color: var(--accent-gold);
-            font-family: var(--font-heading);
-            font-weight: 900;
-            font-size: 1.15rem;
-        }
-
-        .btn-clear-progress {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-muted);
-            padding: 0.45rem 0.9rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 0.88rem;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .btn-clear-progress:hover {
-            background: rgba(255, 0, 127, 0.1);
-            border-color: var(--accent-pink);
-            color: var(--accent-pink);
-            box-shadow: 0 0 10px rgba(255, 0, 127, 0.15);
-        }
-
-        /* Map & Grid Container */
-        .map-container {
-            width: 100%;
-            max-width: 1100px;
-            margin: 1rem auto;
-            padding: 0 1rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .map-wrapper {
             position: relative;
+        }
+
+        .avatar {
+            font-size: 3.5rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+            transition: transform 0.2s;
+        }
+
+        .avatar.attack-left {
+            animation: attack-left-anim 0.25s ease-out;
+        }
+
+        .avatar.attack-right {
+            animation: attack-right-anim 0.25s ease-out;
+        }
+
+        @keyframes attack-left-anim {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(25px) scale(1.1); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes attack-right-anim {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(-25px) scale(1.1); }
+            100% { transform: translateX(0); }
+        }
+
+        .avatar.hurt {
+            animation: hurt-anim 0.25s ease-in-out;
+        }
+
+        @keyframes hurt-anim {
+            0%, 100% { transform: rotate(0) scale(1); filter: brightness(1) drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+            25% { transform: rotate(-10deg) scale(0.9); filter: brightness(0.5) sepia(1) saturate(5) hue-rotate(-50deg); }
+            75% { transform: rotate(10deg) scale(0.9); filter: brightness(0.5) sepia(1) saturate(5) hue-rotate(-50deg); }
+        }
+
+        .fighter-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* HP Bar styles */
+        .hp-bar-container {
             width: 100%;
-            aspect-ratio: 1920 / 1080;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-            border-radius: 16px;
-            border: 3px solid rgba(212, 175, 55, 0.3);
+            height: 14px;
+            background: #1d1b2d;
+            border-radius: 100px;
             overflow: hidden;
-            background: #000;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .map-image {
-            width: 100%;
+        .hp-bar-fill {
             height: 100%;
-            object-fit: contain;
-            display: block;
+            width: 100%;
+            background-color: var(--hp-green);
+            border-radius: 100px;
+            transition: width 0.4s ease-out, background-color 0.3s;
         }
 
-        /* Transparent hotzones positioned precisely on image nameplates */
-        .hotzone {
+        .hp-text {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: -0.2rem;
+        }
+
+        /* Low health HP flashing */
+        .hp-flash {
+            animation: low-hp-flash-anim 0.6s infinite alternate;
+        }
+
+        @keyframes low-hp-flash-anim {
+            0% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Crit Text overlay */
+        .crit-overlay-text {
             position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--hp-red);
+            text-shadow: 0 0 10px #000;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .crit-overlay-text.show {
+            transform: translate(-50%, -50%) scale(1.2) rotate(-10deg);
+            opacity: 1;
+        }
+
+        /* Active buffs display icons */
+        .buffs-container {
+            position: absolute;
+            bottom: 4px;
+            left: 10px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .buff-icon {
+            font-size: 0.95rem;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Question Screen Box */
+        .question-card {
+            background: rgba(18, 16, 33, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-ui);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        /* 4 options buttons grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .option-btn {
+            background: #1e1b36;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--text-primary);
+            padding: 0.9rem 1.2rem;
+            border-radius: var(--radius-ui);
+            font-size: 0.95rem;
+            font-family: inherit;
             cursor: pointer;
-            border-radius: 8px;
+            text-align: left;
             transition: var(--transition);
-            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
         }
 
-        /* Subtle golden glow on hover to respect parchment theme */
-        .hotzone:hover {
-            background: rgba(212, 175, 55, 0.06);
-            box-shadow: 0 0 18px rgba(212, 175, 55, 0.45);
-            border: 1.5px solid rgba(212, 175, 55, 0.3);
+        .option-btn:hover:not(:disabled) {
+            background: #29244a;
+            border-color: var(--accent-cyan);
         }
 
-        /* Completed Stamp on top corner of nameplates */
-        .stamp-completed {
-            position: absolute;
-            right: -8px;
-            top: -8px;
-            background: var(--completed-green);
-            color: #0c0b15;
-            width: 26px;
-            height: 26px;
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        .option-btn:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .option-letter {
+            width: 24px;
+            height: 24px;
+            background: rgba(255,255,255,0.05);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 900;
-            box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
-            border: 2px solid var(--text-primary);
-            z-index: 15;
-            animation: stampZoom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            flex-shrink: 0;
         }
 
-        /* Overlay/Modal Dialog CSS */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(6, 5, 12, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 1000;
+        /* Feedback classes on button press */
+        .option-btn.correct-choice {
+            background: var(--hp-green) !important;
+            border-color: var(--hp-green) !important;
+            color: #0c0b15 !important;
+        }
+
+        .option-btn.correct-choice .option-letter {
+            background: rgba(0,0,0,0.2) !important;
+            color: #fff !important;
+        }
+
+        .option-btn.wrong-choice {
+            background: var(--hp-red) !important;
+            border-color: var(--hp-red) !important;
+        }
+
+        .option-btn.wrong-choice .option-letter {
+            background: rgba(0,0,0,0.2) !important;
+            color: #fff !important;
+        }
+
+        /* Quick Feedback dialog box */
+        .feedback-box {
+            text-align: center;
+            font-size: 0.95rem;
+            min-height: 22px;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* Footer Controls */
+        .game-footer {
+            padding: 1rem 1.25rem;
+            background: rgba(12, 11, 21, 0.7);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .btn-footer {
+            background: #252145;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-ui);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            animation: fadeIn 0.35s ease-out;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transition: var(--transition);
         }
 
-        .gate-modal-card {
-            background: var(--bg-modal);
-            border: 2px solid var(--accent-cyan);
-            border-radius: 24px;
+        .btn-footer:hover {
+            background: #2e2a56;
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-footer:active {
+            transform: scale(0.95);
+        }
+
+        /* Backpack Modal slider up */
+        .backpack-modal {
+            position: absolute;
+            bottom: 0;
+            left: 0;
             width: 100%;
-            max-width: 500px;
-            box-shadow: 0 20px 50px rgba(0, 229, 255, 0.22);
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            position: relative;
-            animation: slideUp 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: #141226;
+            border-top: 2px solid var(--accent-cyan);
+            border-radius: 20px 20px 0 0;
+            z-index: 60;
+            padding: 1.5rem;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.7);
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .backpack-modal.active {
+            transform: translateY(0);
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 0.8rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 0.6rem;
         }
 
         .modal-title {
-            font-size: 1.4rem;
+            font-size: 1.15rem;
             font-weight: 900;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            color: var(--text-primary);
+            gap: 0.4rem;
         }
 
         .btn-close-modal {
             background: transparent;
             border: none;
             color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .backpack-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .bp-item-card {
+            background: #1e1b36;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-ui);
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bp-item-left {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .bp-item-icon {
             font-size: 1.8rem;
+        }
+
+        .bp-item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bp-item-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .bp-item-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .bp-item-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .bp-item-count {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-size: 1.05rem;
+        }
+
+        .btn-use-item {
+            background: var(--hp-green);
+            color: #0c0b15;
+            border: none;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 900;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
             cursor: pointer;
             transition: var(--transition);
         }
 
-        .btn-close-modal:hover {
-            color: var(--accent-pink);
+        .btn-use-item:hover:not(:disabled) {
+            box-shadow: 0 0 10px var(--hp-green);
         }
 
-        .modal-description {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            line-height: 1.5;
+        .btn-use-item:disabled {
+            opacity: 0.4;
+            cursor: default;
         }
 
-        /* Slots inside the Gate modal */
-        .gate-slots-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin: 0.5rem 0;
-        }
-
-        .gate-slot {
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px dashed rgba(255, 255, 255, 0.12);
-            border-radius: 16px;
-            padding: 1rem 0.5rem;
-            display: flex;
+        /* Shop view (Between levels) */
+        .shop-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #121021;
+            z-index: 40;
+            display: none;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
-            min-height: 110px;
-            transition: var(--transition);
-            position: relative;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            overflow-y: auto;
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
         }
 
-        .gate-slot.drag-hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 229, 255, 0.05);
-            transform: scale(1.03);
-        }
-
-        .gate-slot.correct-filled {
-            border: 2.5px solid var(--completed-green);
-            background: rgba(46, 204, 113, 0.08);
-            box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
-        }
-
-        .slot-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-muted);
-        }
-
-        .gate-slot.correct-filled .slot-label {
-            color: var(--completed-green);
-        }
-
-        .slot-circle {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
+        .shop-screen.active {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: rgba(255, 255, 255, 0.15);
-            transition: var(--transition);
         }
 
-        .gate-slot.correct-filled .slot-circle {
-            background: rgba(46, 204, 113, 0.15);
-            border-color: var(--completed-green);
-            color: #fff;
-            animation: stampZoom 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        /* Backpack/Inventory list inside modal */
-        .backpack-section {
-            background: rgba(0, 0, 0, 0.22);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 1.25rem;
-        }
-
-        .backpack-title {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.8rem;
-            letter-spacing: 0.5px;
-        }
-
-        .backpack-slots {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1.25rem;
-            min-height: 80px;
-            border-radius: 8px;
-            padding: 0.5rem;
-        }
-
-        .empty-backpack-text {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+        .shop-header {
             text-align: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px dashed rgba(255,255,255,0.06);
+            padding-bottom: 0.8rem;
         }
 
-        /* Draggable Badge Card */
-        .badge-card {
-            width: 76px;
-            height: 76px;
-            background: rgba(30, 27, 54, 0.85);
-            border: 1px solid rgba(0, 229, 255, 0.15);
-            border-radius: 12px;
+        .shop-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--gold-color);
+            letter-spacing: 2px;
+        }
+
+        .shop-gold-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: var(--gold-color);
+            margin-top: 0.4rem;
+        }
+
+        .shop-items-grid {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            cursor: grab;
-            transition: transform 0.15s, border-color 0.2s;
-            touch-action: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            gap: 0.8rem;
+            flex-grow: 1;
         }
 
-        .badge-card:hover {
-            border-color: var(--accent-cyan);
+        .shop-card {
+            background: #1a1730;
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: var(--radius-ui);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            transition: var(--transition);
+        }
+
+        .shop-card:hover {
+            border-color: var(--gold-color);
+            background: #221e3d;
+        }
+
+        .shop-item-left {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .shop-item-icon {
+            font-size: 2.2rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .shop-item-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .shop-item-name {
+            font-weight: 900;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .shop-item-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+            margin-top: 0.1rem;
+        }
+
+        .btn-buy {
+            background: var(--gold-color);
+            color: #0c0b15;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 0.9rem;
+            padding: 0.55rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .btn-buy:hover:not(:disabled) {
+            box-shadow: 0 0 10px var(--gold-color);
+            transform: translateY(-1px);
+        }
+
+        .btn-buy:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .btn-buy:disabled {
+            background: #252145;
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border);
+            box-shadow: none;
+            cursor: default;
+        }
+
+        .btn-leave-shop {
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, #0084ff 100%);
+            color: #0c0b15;
+            border: none;
+            font-family: inherit;
+            font-weight: 900;
+            font-size: 1.1rem;
+            padding: 0.85rem 2rem;
+            border-radius: var(--radius-ui);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+            margin-top: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-leave-shop:hover {
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
             transform: translateY(-2px);
         }
 
-        .badge-card:active {
-            cursor: grabbing;
-        }
-
-        .badge-icon {
-            font-size: 1.8rem;
-        }
-
-        .badge-name {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--accent-cyan);
-        }
-
-        /* Floating duplicate element during drag */
-        .floating-badge {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            width: 76px;
-            height: 76px;
-            background: rgba(30, 27, 54, 0.95);
-            border: 2px solid var(--accent-cyan);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            box-shadow: 0 10px 25px rgba(0, 229, 255, 0.45);
-            transform: scale(1.1);
-        }
-
-        .floating-badge .badge-icon {
-            font-size: 1.8rem;
-        }
-
-        .floating-badge .badge-name {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--accent-cyan);
-        }
-
-        /* Animations */
-        .wrong-flash {
-            animation: shakeRed 0.3s ease-in-out;
-            border-color: var(--accent-pink) !important;
-            box-shadow: 0 0 15px rgba(255, 0, 127, 0.25) !important;
-        }
-
-        @keyframes shakeRed {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
-        }
-
-        @keyframes stampZoom {
-            0% { transform: scale(1.8) rotate(-10deg); opacity: 0.4; }
-            100% { transform: scale(1) rotate(0); opacity: 1; }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        /* Victory Overlay screen */
-        .victory-overlay-screen {
-            position: fixed;
+        /* Game Over / Victory Screen Overlays */
+        .screen-overlay {
+            position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(185deg, #0d0c1b 0%, #06050b 100%);
-            z-index: 2000;
-            display: flex;
+            z-index: 80;
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 2rem;
             text-align: center;
-            animation: fadeIn 0.5s ease-out;
+            animation: overlay-fade-in-anim 0.4s ease-out forwards;
         }
 
-        .victory-card-box {
-            border: 2px solid var(--accent-gold);
-            background: rgba(22, 19, 41, 0.6);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-radius: 28px;
-            padding: 3.5rem 2.5rem;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: 0 0 40px rgba(255, 215, 0, 0.18);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            animation: slideUp 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        @keyframes overlay-fade-in-anim {
+            0% { opacity: 0; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
-        .victory-trophy {
-            font-size: 5rem;
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
-            animation: bounce 2s infinite;
+        /* GameOver style red background */
+        .gameover-bg {
+            background: linear-gradient(180deg, #3d0a07 0%, #150504 100%);
+            border: 3px solid var(--hp-red);
         }
 
-        .victory-title {
-            font-family: var(--font-heading);
-            font-size: 2.4rem;
+        /* Victory style dark/gold background */
+        .victory-bg {
+            background: linear-gradient(180deg, #1b160b 0%, #0c0b13 100%);
+            border: 3px solid var(--gold-color);
+        }
+
+        .overlay-icon {
+            font-size: 4.5rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+
+        .overlay-title {
+            font-size: 2.2rem;
             font-weight: 900;
-            color: var(--accent-gold);
-            text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
             letter-spacing: 2px;
-        }
-
-        .victory-subtitle {
-            font-size: 1.05rem;
-            color: var(--text-muted);
-            line-height: 1.6;
             margin-bottom: 0.5rem;
         }
 
-        .stats-summary-card {
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid var(--glass-border);
-            padding: 1.25rem 2rem;
-            border-radius: 16px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        .overlay-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 2rem;
         }
 
-        .stat-summary-line {
+        .overlay-stats-card {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-ui);
+            padding: 1.25rem 2rem;
+            margin-bottom: 2.5rem;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .stat-line {
             display: flex;
             justify-content: space-between;
             font-size: 1.05rem;
+            margin-bottom: 0.6rem;
         }
 
-        .stat-summary-val {
-            font-family: var(--font-heading);
+        .stat-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-val-text {
+            font-family: 'Orbitron', monospace;
             font-weight: 700;
             color: var(--accent-cyan);
         }
 
-        .btn-restart-adventure {
-            background: linear-gradient(135deg, var(--accent-gold) 0%, #d4af37 100%);
+        .overlay-action-btn {
+            background: var(--text-primary);
             color: #0c0b15;
-            border: none;
             font-family: inherit;
             font-weight: 900;
-            font-size: 1.2rem;
-            padding: 0.9rem 2.5rem;
-            border-radius: 14px;
+            font-size: 1.1rem;
+            border: none;
+            padding: 0.85rem 2.5rem;
+            border-radius: var(--radius-ui);
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
             transition: var(--transition);
-            width: 100%;
         }
 
-        .btn-restart-adventure:hover {
+        .overlay-action-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.25);
         }
-
-        .victory-canvas {
+        .back-map-btn {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: -1;
+            top: 20px;
+            left: 20px;
+            background: #1e1b36;
+            border: 1px solid var(--glass-border);
+            color: var(--accent-cyan);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 700;
+            transition: all 0.2s;
+            z-index: 999;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-
-        /* Responsive UI Adjustments */
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 2rem;
-            }
-            .top-info-bar {
+        .back-map-btn:hover {
+            background: #29244a;
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 229, 255, 0.2);
+        }
+        @media (max-height: 700px) or (max-width: 600px) {
+            .back-map-btn {
                 position: static;
-                margin-bottom: 1.5rem;
-                width: 100%;
-                max-width: 100%;
-                justify-content: space-between;
+                margin-bottom: 0.5rem;
             }
             body {
+                flex-direction: column;
+                overflow-y: auto;
+                justify-content: flex-start;
                 padding-top: 1rem;
             }
         }
     </style>
 </head>
 <body>
+    <!-- 回到大地圖按鈕 -->
+    <a href="../大冒險地圖/index.html" class="back-map-btn">← 回到大地圖</a>
 
-    <!-- 1. FULL-SCREEN COVER SCREEN -->
-    <div class="cover-overlay" id="coverScreen" onclick="fadeOutCover()">
-        <img src="cover.png" class="cover-image" alt="Game Cover">
-        <div class="cover-prompt">── 點擊任意地方開啟大冒險 ──</div>
-    </div>
-
-    <!-- 2. CONSOLIDATED TOP-RIGHT INFO BAR -->
-    <div class="top-info-bar">
-        <div class="info-badges-count">持有憑證：<span id="certCountText">0 / 3</span></div>
-        <button class="btn-clear-progress" onclick="clearProgress()">🔄 清除進度</button>
-    </div>
-
-    <!-- 3. TOP TITLE HEADER -->
-    <header>
-        <div class="header-title-container">
-            <span class="header-emoji">🗺️</span>
-            <h1>大冒險地圖</h1>
+    <div class="phone-wrapper" id="phoneWrapper">
+        <!-- Notch -->
+        <div class="phone-notch">
+            <div class="notch-camera"></div>
+            <div class="notch-speaker"></div>
         </div>
-        <p>完成 3 個關卡，拿到 3 個憑證解開大門大鎖！</p>
-    </header>
 
-    <!-- 4. ADVENTURE PARCHMENT MAP AREA (Fits Contain) -->
-    <div class="map-container">
-        <div class="map-wrapper">
-            <img src="map-bg.png" class="map-image" alt="Adventure Map">
-            
-            <!-- Hotzone 1: Dynasty Palace (朝代對應殿) -->
-            <a href="../示範1_朝代配對/index.html" class="hotzone" id="hz-dynasty" style="left: 9.3%; top: 36.8%; width: 16.0%; height: 7.2%;" onclick="playSound('button')">
-                <div class="stamp-completed" id="stamp-dynasty" style="display: none;">✓</div>
-            </a>
-            
-            <!-- Hotzone 2: Idiom Wood (成語秘字林) -->
-            <a href="../示範2_成語填字/index.html" class="hotzone" id="hz-idiom" style="left: 73.7%; top: 39.7%; width: 16.0%; height: 7.2%;" onclick="playSound('button')">
-                <div class="stamp-completed" id="stamp-idiom" style="display: none;">✓</div>
-            </a>
-            
-            <!-- Hotzone 3: Monster plains (魔物試煉原) -->
-            <a href="../示範3_打怪RPG/index.html" class="hotzone" id="hz-warrior" style="left: 12.3%; top: 88.0%; width: 16.0%; height: 7.2%;" onclick="playSound('button')">
-                <div class="stamp-completed" id="stamp-warrior" style="display: none;">✓</div>
-            </a>
-            
-            <!-- Hotzone 4: Central Gate (三印天門) -->
-            <div class="hotzone" id="hz-gate" style="left: 37.8%; top: 61.8%; width: 24.4%; height: 11.2%;" onclick="openGateModal()"></div>
+        <!-- 1. LOADING SCREEN -->
+        <div class="loading-screen" id="loadingScreen">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loadingText">正在下載 CSV 題庫...</div>
         </div>
-    </div>
 
-    <!-- 5. GATE UNLOCK MODAL DIALOG -->
-    <div class="modal-overlay" id="gateModal" style="display: none;">
-        <div class="gate-modal-card">
+        <!-- 1.5. LOAD FAIL / TIMEOUT OVERLAY -->
+        <div class="screen-overlay victory-bg" id="loadFailOverlay" style="display: none; z-index: 100; background: linear-gradient(180deg, #18142a 0%, #0a0815 100%); border: 3px solid var(--accent-pink);">
+            <div class="overlay-icon">⚠️</div>
+            <div class="overlay-title" style="color: var(--accent-pink); text-shadow: 0 0 15px rgba(255, 0, 127, 0.4); font-size: 1.8rem; margin-top: 1rem;">題庫載入失敗</div>
+            <div class="overlay-subtitle" id="loadFailSubtitle" style="margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6; padding: 0 1rem; color: var(--text-primary);">
+                無法從網路載入最新的 CSV 題庫。<br>載入超時或網路連線不穩定。
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.8rem; width: 100%; max-width: 280px; align-items: center;">
+                <button class="overlay-action-btn" style="background: linear-gradient(135deg, var(--accent-cyan) 0%, #0084ff 100%); color: #0c0b15; width: 100%; border: none;" onclick="retryFetchQuestions()">🔄 重新整理</button>
+                <button class="overlay-action-btn" style="background: rgba(255, 255, 255, 0.08); color: var(--text-primary); border: 1px solid var(--glass-border); width: 100%;" onclick="useFallbackQuestions()">📚 預設題庫</button>
+            </div>
+        </div>
+
+        <!-- 2. GAME OVER OVERLAY -->
+        <div class="screen-overlay gameover-bg" id="gameoverOverlay">
+            <div class="overlay-icon">💀</div>
+            <div class="overlay-title" style="color: var(--hp-red); text-shadow: 0 0 15px rgba(231, 76, 60, 0.4);">GAME OVER</div>
+            <div class="overlay-subtitle" id="gameoverSubtitle">勇者在戰鬥中力竭倒下了...</div>
+            <button class="overlay-action-btn" onclick="restartGame()">重新挑戰</button>
+        </div>
+
+        <!-- 3. VICTORY OVERLAY -->
+        <div class="screen-overlay victory-bg" id="victoryOverlay">
+            <div class="overlay-icon">🏆</div>
+            <div class="overlay-title" style="color: var(--gold-color); text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);">通關成功！</div>
+            <div class="overlay-subtitle">您成功擊敗了魔王，維護了世界和平！</div>
+            <div class="overlay-stats-card">
+                <div class="stat-line">
+                    <span>答對題數：</span>
+                    <span class="stat-val-text" id="final-correct">0 / 5</span>
+                </div>
+                <div class="stat-line">
+                    <span>剩餘金幣：</span>
+                    <span class="stat-val-text" id="final-gold" style="color: var(--gold-color);">0 💰</span>
+                </div>
+                <div class="stat-line">
+                    <span>飲用藥水：</span>
+                    <span class="stat-val-text" id="final-potions">0 瓶</span>
+                </div>
+            </div>
+            <button class="overlay-action-btn" style="background: var(--gold-color);" onclick="restartGame()">重新挑戰</button>
+        </div>
+
+        <!-- 4. SHOP SCREEN -->
+        <div class="shop-screen" id="shopScreen">
+            <div class="shop-header">
+                <div class="shop-title">📦 朝廷驛站商店</div>
+                <div class="shop-gold-display">目前金幣：<span id="shop-gold-val" style="font-weight: 700;">0</span> 💰</div>
+            </div>
+            <div class="shop-items-grid">
+                <!-- Shop item 1 -->
+                <div class="shop-card">
+                    <div class="shop-item-left">
+                        <span class="shop-item-icon">🧪</span>
+                        <div class="shop-item-details">
+                            <span class="shop-item-name">紅藥水</span>
+                            <span class="shop-item-desc">恢復 50 滴血量（戰鬥中可隨時點包包飲用）</span>
+                        </div>
+                    </div>
+                    <button class="btn-buy" onclick="buyItem('potion', 30)" id="buy-potion-btn">30 💰</button>
+                </div>
+                <!-- Shop item 2 -->
+                <div class="shop-card">
+                    <div class="shop-item-left">
+                        <span class="shop-item-icon">💎</span>
+                        <div class="shop-item-details">
+                            <span class="shop-item-name">攻擊水晶</span>
+                            <span class="shop-item-desc">下一題若答對可觸發暴擊：怪物傷害倍增 -50 HP</span>
+                        </div>
+                    </div>
+                    <button class="btn-buy" onclick="buyItem('crystal', 40)" id="buy-crystal-btn">40 💰</button>
+                </div>
+                <!-- Shop item 3 -->
+                <div class="shop-card">
+                    <div class="shop-item-left">
+                        <span class="shop-item-icon">🛡️</span>
+                        <div class="shop-item-details">
+                            <span class="shop-item-name">救命符</span>
+                            <span class="shop-item-desc">當生命值歸零時自動消耗，復活並保留 1 滴血</span>
+                        </div>
+                    </div>
+                    <button class="btn-buy" onclick="buyItem('amulet', 80)" id="buy-amulet-btn">80 💰</button>
+                </div>
+            </div>
+            <button class="btn-leave-shop" onclick="leaveShop()">進入下一關 ➔</button>
+        </div>
+
+        <!-- 5. ACTIVE BATTLE SCREEN -->
+        <!-- Stat Header bar -->
+        <div class="game-header">
+            <div class="level-title" id="stage-indicator">STAGE 1 / 5</div>
+            <div class="gold-counter" id="goldCounter">💰 <span id="gold-val">0</span></div>
+        </div>
+
+        <!-- Body Area -->
+        <div class="game-body">
+            <!-- Arena Box -->
+            <div class="battle-arena" id="battleArena">
+                <!-- Critical Text Overlay -->
+                <div class="crit-overlay-text" id="critText">CRITICAL!</div>
+
+                <!-- Active Buffs -->
+                <div class="buffs-container">
+                    <div class="buff-icon" id="buff-crystal" style="display: none; border-color: var(--accent-cyan);" title="攻擊水晶生效中">💎</div>
+                    <div class="buff-icon" id="buff-amulet" style="display: none; border-color: var(--gold-color);" title="救命符護庇中">🛡️</div>
+                </div>
+
+                <!-- Wizard Player -->
+                <div class="fighter-box">
+                    <div class="avatar" id="playerAvatar">🧙</div>
+                    <span class="fighter-name">🧙 巫師 (我方)</span>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-fill" id="player-hp-bar"></div>
+                    </div>
+                    <span class="hp-text" id="player-hp-text">100 / 100</span>
+                </div>
+
+                <!-- Monster Enemy -->
+                <div class="fighter-box">
+                    <div class="avatar" id="monsterAvatar">🐺</div>
+                    <span class="fighter-name" id="monsterName">🐺 野狼</span>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-fill" id="monster-hp-bar"></div>
+                    </div>
+                    <span class="hp-text" id="monster-hp-text">100 / 100</span>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="question-card">
+                <div class="question-text" id="questionText">正在載入關卡...</div>
+            </div>
+
+            <!-- Feedback Text -->
+            <div class="feedback-box" id="feedbackText" style="color: var(--accent-cyan);"></div>
+
+            <!-- Options Grid -->
+            <div class="options-grid" id="optionsGrid">
+                <!-- A,B,C,D buttons will render dynamically -->
+            </div>
+        </div>
+
+        <!-- Footer Control Panel -->
+        <div class="game-footer">
+            <button class="btn-footer" onclick="openBackpack()">🎒 背包 (<span id="potion-count">0</span>)</button>
+            <span style="font-size:0.75rem; color:var(--text-muted);">答對怪物 -25HP，答錯扣血</span>
+        </div>
+
+        <!-- 6. BACKPACK BOTTOM MODAL SLIDER -->
+        <div class="backpack-modal" id="backpackModal">
             <div class="modal-header">
-                <h2 class="modal-title">🔒 通關大門</h2>
-                <button class="btn-close-modal" onclick="closeGateModal()">&times;</button>
+                <div class="modal-title">🎒 行囊背包</div>
+                <button class="btn-close-modal" onclick="closeBackpack()">&times;</button>
             </div>
-            
-            <p class="modal-description">請將下方的憑證徽章拖曳放入正確的上方凹槽以解鎖大門：</p>
-            
-            <!-- Slots -->
-            <div class="gate-slots-container">
-                <div class="gate-slot" data-type="dynasty" id="slot-dynasty">
-                    <span class="slot-label">朝代之印</span>
-                    <div class="slot-circle">？</div>
+            <div class="backpack-items-list">
+                <!-- Potion Card -->
+                <div class="bp-item-card">
+                    <div class="bp-item-left">
+                        <span class="bp-item-icon">🧪</span>
+                        <div class="bp-item-info">
+                            <span class="bp-item-name">紅藥水</span>
+                            <span class="bp-item-desc">點擊可立刻恢復 50 點生命值</span>
+                        </div>
+                    </div>
+                    <div class="bp-item-right">
+                        <span class="bp-item-count" id="bp-potion-qty">0</span>
+                        <button class="btn-use-item" id="use-potion-btn" onclick="usePotion()">飲用</button>
+                    </div>
                 </div>
-                <div class="gate-slot" data-type="idiom" id="slot-idiom">
-                    <span class="slot-label">成語之印</span>
-                    <div class="slot-circle">？</div>
+                <!-- Crystal Card -->
+                <div class="bp-item-card">
+                    <div class="bp-item-left">
+                        <span class="bp-item-icon">💎</span>
+                        <div class="bp-item-info">
+                            <span class="bp-item-name">攻擊水晶</span>
+                            <span class="bp-item-desc">答對自動觸發暴擊（下一關自動帶入）</span>
+                        </div>
+                    </div>
+                    <div class="bp-item-right">
+                        <span class="bp-item-count" id="bp-crystal-qty">0</span>
+                    </div>
                 </div>
-                <div class="gate-slot" data-type="warrior" id="slot-warrior">
-                    <span class="slot-label">勇者之印</span>
-                    <div class="slot-circle">？</div>
-                </div>
-            </div>
-            
-            <!-- Backpack/Inventory -->
-            <div class="backpack-section">
-                <h3 class="backpack-title">🎒 冒險行囊 (憑證徽章)</h3>
-                <div class="backpack-slots" id="backpackBadges">
-                    <!-- Dynamic badges go here -->
+                <!-- Amulet Card -->
+                <div class="bp-item-card">
+                    <div class="bp-item-left">
+                        <span class="bp-item-icon">🛡️</span>
+                        <div class="bp-item-info">
+                            <span class="bp-item-name">救命符</span>
+                            <span class="bp-item-desc">HP為0時會自動觸發復活</span>
+                        </div>
+                    </div>
+                    <div class="bp-item-right">
+                        <span class="bp-item-count" id="bp-amulet-qty">0</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 6. VICTORY SUCCESS OVERLAY SCREEN -->
-    <div class="victory-overlay-screen" id="victoryOverlay" style="display: none;">
-        <canvas class="victory-canvas" id="victoryCanvas"></canvas>
-        <div class="victory-card-box">
-            <div class="victory-trophy">🏆</div>
-            <h2 class="victory-title">冒險完成！</h2>
-            <p class="victory-subtitle">恭喜您！順利解開了所有難關，成功打開通關大門，完成了這場跨越時空的大挑戰！</p>
-            
-            <div class="stats-summary-card">
-                <div class="stat-summary-line">
-                    <span>完成關卡數：</span>
-                    <span class="stat-summary-val" style="color: var(--accent-gold);">3 / 3</span>
-                </div>
-                <div class="stat-summary-line">
-                    <span>總冒險時長：</span>
-                    <span class="stat-summary-val" id="totalDurationText">00 分 00 秒</span>
-                </div>
-            </div>
-            
-            <button class="btn-restart-adventure" onclick="restartAdventure()">再次冒險</button>
-        </div>
-    </div>
-
-    <!-- JavaScript Logical Controller -->
+    <!-- Game Script Controller -->
     <script>
-        const certKeys = {
-            dynasty: 'cert_dynasty',
-            idiom: 'cert_idiom',
-            warrior: 'cert_warrior'
+        // CSV URL
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRl8UcvCk2AXcY6T84edBNrSAOKFE4ShghPq5Q-rrEeOlT07426oA_ce71jGJ4rRbS61I_FwZUWRBMa/pub?output=csv";
+
+        // Fallback local question database
+        const FALLBACK_QUESTIONS = [
+            { question: "「己所不欲，勿施於人」是哪位古代思想家的名言？", correct: "孔子", incorrect: ["孟子", "老子", "莊子"] },
+            { question: "地球上最大的海洋是哪一個？", correct: "太平洋", incorrect: ["大西洋", "印度洋", "北極海"] },
+            { question: "空氣中含量最多的氣體是哪一種？", correct: "氮氣", incorrect: ["氧氣", "二氧化碳", "氫氣"] },
+            { question: "發明活字印刷術的古代科學家是誰？", correct: "畢昇", incorrect: ["蔡倫", "張衡", "祖沖之"] },
+            { question: "太陽系中體積最大的行星是哪一顆？", correct: "木星", incorrect: ["土星", "天王星", "海王星"] },
+            { question: "植物進行光合作用主要是在哪個細胞構造中進行？", correct: "葉綠體", incorrect: ["細胞核", "線粒體", "液胞"] },
+            { question: "人體中最大的器官是什麼？", correct: "皮膚", incorrect: ["肝臟", "肺", "大腸"] },
+            { question: "請問戰國時期的「商鞅變法」是在哪一個國家推行的？", correct: "秦國", incorrect: ["楚國", "齊國", "趙國"] },
+            { question: "下列哪一種動物不屬於哺乳類？", correct: "企鵝", incorrect: ["鯨魚", "蝙蝠", "袋鼠"] },
+            { question: "荷蘭人統治台灣的時期，主要是以哪裡為行政中心？", correct: "熱蘭遮城", incorrect: ["普羅民遮城", "紅毛城", "聖薩爾瓦多城"] },
+            { question: "發明溫度計與望遠鏡，並支持地動說而被判終身監禁的科學家是誰？", correct: "伽利略", incorrect: ["牛頓", "哥白尼", "開普勒"] },
+            { question: "台灣最高的山峰是哪一座？", correct: "玉山", incorrect: ["雪山", "秀姑巒山", "南湖大山"] }
+        ];
+
+        // Monster parameters
+        const MONSTERS = [
+            { name: "野狼", emoji: "🐺", hp: 100 },
+            { name: "毒蠍", emoji: "🦂", hp: 100 },
+            { name: "惡鬼", emoji: "👹", hp: 100 },
+            { name: "巨龍", emoji: "🐲", hp: 100 },
+            { name: "魔王", emoji: "👑", hp: 100 }
+        ];
+
+        // Game State Variables
+        let questions = [];
+        let playerHP = 100;
+        let gold = 0;
+        let currentStage = 0; // 0 to 4 (stages 1 to 5)
+        let monsterHP = 100;
+        
+        // Items quantities
+        let inventory = {
+            potion: 0,
+            crystal: 0,
+            amulet: 0
         };
 
-        let certificates = {
-            dynasty: false,
-            idiom: false,
-            warrior: false
-        };
+        // Stats tracking
+        let correctCount = 0;
+        let potionsUsed = 0;
+        let currentQuestion = null;
+        let isMuted = false;
+        let gameActive = false;
 
-        let slotsState = {
-            dynasty: false,
-            idiom: false,
-            warrior: false
-        };
+        // UI Element Selectors
+        const phone = document.getElementById('phoneWrapper');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingText = document.getElementById('loadingText');
+        const shopScreen = document.getElementById('shopScreen');
+        const gameoverOverlay = document.getElementById('gameoverOverlay');
+        const gameoverSubtitle = document.getElementById('gameoverSubtitle');
+        const victoryOverlay = document.getElementById('victoryOverlay');
+        const backpackModal = document.getElementById('backpackModal');
 
-        // Cover screen fade-out handler
-        function fadeOutCover() {
-            const cover = document.getElementById('coverScreen');
-            cover.style.opacity = '0';
-            cover.style.pointerEvents = 'none';
-            sessionStorage.setItem('cover_shown', 'true');
-            playSound('button');
-            setTimeout(() => {
-                cover.style.display = 'none';
-            }, 600);
-        }
+        const stageIndicator = document.getElementById('stage-indicator');
+        const goldVal = document.getElementById('gold-val');
+        const shopGoldVal = document.getElementById('shop-gold-val');
+        const goldCounter = document.getElementById('goldCounter');
+        
+        const playerHpBar = document.getElementById('player-hp-bar');
+        const playerHpText = document.getElementById('player-hp-text');
+        const monsterName = document.getElementById('monsterName');
+        const monsterAvatar = document.getElementById('monsterAvatar');
+        const monsterHpBar = document.getElementById('monster-hp-bar');
+        const monsterHpText = document.getElementById('monster-hp-text');
+        const playerAvatar = document.getElementById('playerAvatar');
+        
+        const questionText = document.getElementById('questionText');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const feedbackText = document.getElementById('feedbackText');
+        const battleArena = document.getElementById('battleArena');
+        const critText = document.getElementById('critText');
+        
+        // Buff icons
+        const buffCrystal = document.getElementById('buff-crystal');
+        const buffAmulet = document.getElementById('buff-amulet');
 
-        // Initialize cover screen loading
-        function initCover() {
-            const cover = document.getElementById('coverScreen');
-            if (sessionStorage.getItem('cover_shown') === 'true') {
-                cover.style.display = 'none';
-            } else {
-                cover.style.display = 'flex';
-            }
-        }
+        // Potion counts
+        const potionCount = document.getElementById('potion-count');
+        const bpPotionQty = document.getElementById('bp-potion-qty');
+        const bpCrystalQty = document.getElementById('bp-crystal-qty');
+        const bpAmuletQty = document.getElementById('bp-amulet-qty');
+        const usePotionBtn = document.getElementById('use-potion-btn');
 
-        // Initialize Adventure start time on first loading
-        if (!localStorage.getItem('adventure_start')) {
-            localStorage.setItem('adventure_start', Date.now().toString());
-        }
+        // Victory displays
+        const finalCorrect = document.getElementById('final-correct');
+        const finalGold = document.getElementById('final-gold');
+        const finalPotions = document.getElementById('final-potions');
 
-        // Check completion progress
-        function checkProgress() {
-            certificates.dynasty = localStorage.getItem(certKeys.dynasty) === 'true';
-            certificates.idiom = localStorage.getItem(certKeys.idiom) === 'true';
-            certificates.warrior = localStorage.getItem(certKeys.warrior) === 'true';
-
-            let count = 0;
-            if (certificates.dynasty) {
-                document.getElementById('stamp-dynasty').style.display = 'flex';
-                count++;
-            } else {
-                document.getElementById('stamp-dynasty').style.display = 'none';
-            }
-            if (certificates.idiom) {
-                document.getElementById('stamp-idiom').style.display = 'flex';
-                count++;
-            } else {
-                document.getElementById('stamp-idiom').style.display = 'none';
-            }
-            if (certificates.warrior) {
-                document.getElementById('stamp-warrior').style.display = 'flex';
-                count++;
-            } else {
-                document.getElementById('stamp-warrior').style.display = 'none';
-            }
-
-            document.getElementById('certCountText').innerText = `${count} / 3`;
-        }
-
-        // Web Audio API Sound Synthesizer
+        // Audio System
         let audioCtx = null;
 
         function initAudio() {
@@ -834,6 +1223,7 @@
         }
 
         function playSound(type) {
+            if (isMuted) return;
             initAudio();
             if (!audioCtx) return;
 
@@ -845,417 +1235,693 @@
             const gain = audioCtx.createGain();
             const now = audioCtx.currentTime;
 
-            if (type === 'button') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, now);
-                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
-                gain.gain.setValueAtTime(0.08, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(now);
-                osc.stop(now + 0.12);
-            } else if (type === 'correct') {
-                const osc2 = audioCtx.createOscillator();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, now);
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(783.99, now + 0.03);
+            if (type === 'attack') {
+                // Magic cast zap (向上滑頻)
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.15);
                 
                 gain.gain.setValueAtTime(0.12, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
                 
                 osc.connect(gain);
-                osc2.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start(now);
-                osc2.start(now);
-                osc.stop(now + 0.4);
-                osc2.stop(now + 0.4);
-            } else if (type === 'wrong') {
+                osc.stop(now + 0.18);
+            } else if (type === 'crit') {
+                // Double powerful magic explosion (重擊聲)
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(130, now);
-                osc.frequency.linearRampToValueAtTime(70, now + 0.18);
-                
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(220, now);
-                
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(1500, now + 0.25);
                 
                 gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.28);
+            } else if (type === 'hurt') {
+                // Heavy physical hit (怪物反擊)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(60, now + 0.2);
+                
+                gain.gain.setValueAtTime(0.15, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
                 
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
                 osc.start(now);
                 osc.stop(now + 0.22);
+            } else if (type === 'heal') {
+                // Rising bubble sound (補血)
+                const freqList = [300, 400, 500, 650];
+                freqList.forEach((freq, idx) => {
+                    const bOsc = audioCtx.createOscillator();
+                    const bGain = audioCtx.createGain();
+                    bOsc.type = 'sine';
+                    bOsc.frequency.setValueAtTime(freq, now + idx * 0.05);
+                    
+                    bGain.gain.setValueAtTime(0.08, now + idx * 0.05);
+                    bGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.15);
+                    
+                    bOsc.connect(bGain);
+                    bGain.connect(audioCtx.destination);
+                    bOsc.start(now + idx * 0.05);
+                    bOsc.stop(now + idx * 0.05 + 0.15);
+                });
+            } else if (type === 'coin') {
+                // High bell chime click (金幣增加)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, now); // B5
+                osc.frequency.setValueAtTime(1318.51, now + 0.05); // E6
+                
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.18);
+            } else if (type === 'revive') {
+                // Divine resurrection sound
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            } else if (type === 'die') {
+                // Sad minor chord
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(180, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.6);
             } else if (type === 'victory') {
-                const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
-                scale.forEach((freq, idx) => {
-                    const singleOsc = audioCtx.createOscillator();
-                    const singleGain = audioCtx.createGain();
-                    singleOsc.type = 'sine';
-                    singleOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
-                    
-                    singleGain.gain.setValueAtTime(0.08, now + idx * 0.08);
-                    singleGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
-                    
-                    singleOsc.connect(singleGain);
-                    singleGain.connect(audioCtx.destination);
-                    
-                    singleOsc.start(now + idx * 0.08);
-                    singleOsc.stop(now + idx * 0.08 + 0.35);
+                // Victory fanfares
+                const fanfare = [523.25, 659.25, 783.99, 1046.50];
+                fanfare.forEach((freq, idx) => {
+                    const vOsc = audioCtx.createOscillator();
+                    const vGain = audioCtx.createGain();
+                    vOsc.type = 'sine';
+                    vOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    vGain.gain.setValueAtTime(0.1, now + idx * 0.1);
+                    vGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+                    vOsc.connect(vGain);
+                    vGain.connect(audioCtx.destination);
+                    vOsc.start(now + idx * 0.1);
+                    vOsc.stop(now + idx * 0.1 + 0.3);
                 });
             }
         }
 
-        // Modal Operations
-        function openGateModal() {
-            playSound('button');
-            document.getElementById('gateModal').style.display = 'flex';
-            renderGateSlots();
-            renderBackpackBadges();
-        }
-
-        function closeGateModal() {
-            playSound('button');
-            document.getElementById('gateModal').style.display = 'none';
-        }
-
-        function renderGateSlots() {
-            const types = ['dynasty', 'idiom', 'warrior'];
-            types.forEach(t => {
-                const slot = document.getElementById(`slot-${t}`);
-                if (slotsState[t]) {
-                    slot.classList.add('correct-filled');
-                    const emoji = t === 'dynasty' ? '🎴' : (t === 'idiom' ? '📝' : '⚔️');
-                    slot.querySelector('.slot-circle').innerHTML = emoji;
-                } else {
-                    slot.classList.remove('correct-filled');
-                    slot.querySelector('.slot-circle').innerHTML = '？';
-                }
-            });
-        }
-
-        function renderBackpackBadges() {
-            const container = document.getElementById('backpackBadges');
-            container.innerHTML = '';
-            
-            let hasAny = false;
-            
-            if (certificates.dynasty && !slotsState.dynasty) {
-                container.appendChild(createBadgeElement('dynasty', '🎴', '朝代之印'));
-                hasAny = true;
-            }
-            if (certificates.idiom && !slotsState.idiom) {
-                container.appendChild(createBadgeElement('idiom', '📝', '成語之印'));
-                hasAny = true;
-            }
-            if (certificates.warrior && !slotsState.warrior) {
-                container.appendChild(createBadgeElement('warrior', '⚔️', '勇者之印'));
-                hasAny = true;
-            }
-            
-            if (!hasAny) {
-                container.innerHTML = '<div class="empty-backpack-text">行囊中目前沒有可放置的憑證</div>';
-            }
-        }
-
-        function createBadgeElement(type, emoji, name) {
-            const badge = document.createElement('div');
-            badge.className = 'badge-card';
-            badge.dataset.type = type;
-            badge.innerHTML = `
-                <div class="badge-icon">${emoji}</div>
-                <div class="badge-name">${name}</div>
-            `;
-            badge.addEventListener('pointerdown', onBadgePointerDown);
-            return badge;
-        }
-
-        // Pointer Drag and Drop engine
-        let activeBadge = null;
-        let floatingBadge = null;
-        let activePointerId = null;
-        let startX = 0;
-        let startY = 0;
-
-        function onBadgePointerDown(e) {
-            if (e.button !== undefined && e.button !== 0) return;
-            
-            activeBadge = e.currentTarget;
-            activePointerId = e.pointerId;
-            
-            initAudio();
-            
-            startX = e.clientX;
-            startY = e.clientY;
-            
-            const badgeRect = activeBadge.getBoundingClientRect();
-            activeBadge.style.opacity = '0.3';
-            
-            floatingBadge = document.createElement('div');
-            floatingBadge.className = 'floating-badge';
-            floatingBadge.innerHTML = activeBadge.innerHTML;
-            floatingBadge.style.left = badgeRect.left + 'px';
-            floatingBadge.style.top = badgeRect.top + 'px';
-            
-            floatingBadge.dataset.offsetX = startX - badgeRect.left;
-            floatingBadge.dataset.offsetY = startY - badgeRect.top;
-            
-            document.body.appendChild(floatingBadge);
-            
-            window.addEventListener('pointermove', onBadgePointerMove);
-            window.addEventListener('pointerup', onBadgePointerUp);
-            window.addEventListener('pointercancel', onBadgePointerCancel);
-            
-            e.preventDefault();
-        }
-
-        function onBadgePointerMove(e) {
-            if (!floatingBadge || e.pointerId !== activePointerId) return;
-            
-            const ox = parseFloat(floatingBadge.dataset.offsetX);
-            const oy = parseFloat(floatingBadge.dataset.offsetY);
-            
-            const px = e.clientX - ox;
-            const py = e.clientY - oy;
-            
-            floatingBadge.style.left = px + 'px';
-            floatingBadge.style.top = py + 'px';
-            
-            const cx = e.clientX;
-            const cy = e.clientY;
-            const slots = document.querySelectorAll('.gate-slot');
-            
-            slots.forEach(slot => {
-                const rect = slot.getBoundingClientRect();
-                if (cx >= rect.left && cx <= rect.right &&
-                    cy >= rect.top && cy <= rect.bottom) {
-                    slot.classList.add('drag-hover');
-                } else {
-                    slot.classList.remove('drag-hover');
-                }
-            });
-        }
-
-        function onBadgePointerUp(e) {
-            if (e.pointerId !== activePointerId) return;
-            
-            const cx = e.clientX;
-            const cy = e.clientY;
-            
-            const slots = document.querySelectorAll('.gate-slot');
-            let droppedSlot = null;
-            
-            for (const slot of slots) {
-                const rect = slot.getBoundingClientRect();
-                if (cx >= rect.left && cx <= rect.right &&
-                    cy >= rect.top && cy <= rect.bottom) {
-                    droppedSlot = slot;
-                    break;
-                }
-            }
-            
-            if (droppedSlot) {
-                droppedSlot.classList.remove('drag-hover');
-                
-                const badgeType = activeBadge.dataset.type;
-                const slotType = droppedSlot.dataset.type;
-                
-                if (badgeType === slotType) {
-                    playSound('correct');
-                    slotsState[badgeType] = true;
-                    
-                    droppedSlot.classList.add('correct-filled');
-                    const emoji = badgeType === 'dynasty' ? '🎴' : (badgeType === 'idiom' ? '📝' : '⚔️');
-                    droppedSlot.querySelector('.slot-circle').innerHTML = emoji;
-                    
-                    floatingBadge.remove();
-                    floatingBadge = null;
-                    
-                    activeBadge.remove();
-                    
-                    checkGateUnlock();
-                } else {
-                    playSound('wrong');
-                    droppedSlot.classList.add('wrong-flash');
-                    setTimeout(() => {
-                        droppedSlot.classList.remove('wrong-flash');
-                    }, 300);
-                    
-                    snapBack();
-                }
+        function toggleMute() {
+            isMuted = !isMuted;
+            const muteBtn = document.getElementById('mute-btn');
+            if (isMuted) {
+                muteBtn.innerText = "🔇 音效：關";
             } else {
-                playSound('wrong');
-                snapBack();
+                muteBtn.innerText = "🎵 音效：開";
+                playSound('coin');
             }
+        }
+
+        // Shuffle helper
+        function shuffle(arr) {
+            const res = [...arr];
+            for (let i = res.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [res[i], res[j]] = [res[j], res[i]];
+            }
+            return res;
+        }
+
+        // Fetch Google Sheet published CSV database with custom timeout and popup select overlay
+        async function fetchQuestions() {
+            // Reset loading UI
+            loadingScreen.style.display = 'flex';
+            loadingScreen.style.opacity = '1';
+            loadingText.innerText = "正在下載 CSV 題庫...";
             
-            cleanBadgeDrag();
-        }
+            const controller = new AbortController();
+            const signal = controller.signal;
+            
+            // Set 8-second loading timeout
+            const timeoutDuration = 8000;
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+            }, timeoutDuration);
 
-        function onBadgePointerCancel(e) {
-            if (e.pointerId !== activePointerId) return;
-            snapBack();
-            cleanBadgeDrag();
-        }
-
-        function snapBack() {
-            if (floatingBadge && activeBadge) {
-                const badgeRect = activeBadge.getBoundingClientRect();
-                floatingBadge.style.transition = 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
-                floatingBadge.style.left = badgeRect.left + 'px';
-                floatingBadge.style.top = badgeRect.top + 'px';
+            try {
+                const response = await fetch(CSV_URL, { signal });
+                clearTimeout(timeoutId);
                 
-                const fCopy = floatingBadge;
-                const aCopy = activeBadge;
-                floatingBadge = null;
+                if (!response.ok) throw new Error(`HTTP 錯誤狀態: ${response.status}`);
+                const text = await response.text();
+                
+                const parsed = parseCSV(text);
+                if (parsed.length === 0) throw new Error("CSV 解析無有效資料");
+                
+                questions = parsed;
+                loadingText.innerText = "成功下載題庫，開始遊戲！";
                 
                 setTimeout(() => {
-                    if (fCopy) fCopy.remove();
-                    if (aCopy) aCopy.style.opacity = '1';
-                }, 300);
-            }
-        }
-
-        function cleanBadgeDrag() {
-            window.removeEventListener('pointermove', onBadgePointerMove);
-            window.removeEventListener('pointerup', onBadgePointerUp);
-            window.removeEventListener('pointercancel', onBadgePointerCancel);
-            
-            if (activeBadge && !floatingBadge) {
-                activeBadge.style.opacity = '1';
-            }
-            activePointerId = null;
-        }
-
-        // Check slots verification to trigger victory
-        function checkGateUnlock() {
-            if (slotsState.dynasty && slotsState.idiom && slotsState.warrior) {
-                setTimeout(() => {
-                    closeGateModal();
-                    showVictoryScreen();
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                        startGame();
+                    }, 500);
                 }, 800);
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.warn("Fetch failed or timed out: ", err);
+                
+                let errorMsg = "無法從網路下載最新的 CSV 題庫。";
+                if (err.name === 'AbortError') {
+                    errorMsg = `題庫載入超時（超過 ${timeoutDuration/1000} 秒）。`;
+                } else {
+                    errorMsg = `題庫載入失敗（${err.message || '網路連線異常'}）。`;
+                }
+                
+                showLoadFailOverlay(errorMsg);
             }
         }
 
-        // Victory Screen Setup
-        let victoryAnimId = null;
-        function showVictoryScreen() {
+        // Show choice overlay for retry or fallback database
+        function showLoadFailOverlay(message) {
+            const loadFailOverlay = document.getElementById('loadFailOverlay');
+            const loadFailSubtitle = document.getElementById('loadFailSubtitle');
+            loadFailSubtitle.innerHTML = `${message}<br>請檢查網路連線，或選擇使用預設題庫繼續遊戲。`;
+            loadFailOverlay.style.display = 'flex';
+        }
+
+        // Retry downloading CSV
+        function retryFetchQuestions() {
+            playSound('coin'); // Play audio feedback
+            const loadFailOverlay = document.getElementById('loadFailOverlay');
+            loadFailOverlay.style.display = 'none';
+            fetchQuestions();
+        }
+
+        // Use local fallback questions
+        function useFallbackQuestions() {
+            playSound('coin'); // Play audio feedback
+            const loadFailOverlay = document.getElementById('loadFailOverlay');
+            loadFailOverlay.style.display = 'none';
+            
+            loadingText.innerText = "載入預設題庫，開始遊戲...";
+            
+            questions = FALLBACK_QUESTIONS.map(q => ({
+                question: q.question,
+                correct: q.correct,
+                incorrect: q.incorrect
+            }));
+            
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    startGame();
+                }, 500);
+            }, 800);
+        }
+
+        // CSV parsing helper
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Handling commas inside quotes correctly
+                let parts = [];
+                let insideQuote = false;
+                let entry = "";
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        insideQuote = !insideQuote;
+                    } else if (char === ',' && !insideQuote) {
+                        parts.push(entry.trim());
+                        entry = "";
+                    } else {
+                        entry += char;
+                    }
+                }
+                parts.push(entry.trim());
+                
+                // Remove outer quotes if present
+                parts = parts.map(p => p.replace(/^"|"$/g, '').trim());
+
+                if (parts.length >= 2) {
+                    const question = parts[0];
+                    const correctAns = parts[1];
+                    const incorrectAns = parts.slice(2).filter(x => x && x !== '空');
+                    
+                    if (question && correctAns) {
+                        data.push({
+                            question: question,
+                            correct: correctAns,
+                            incorrect: incorrectAns
+                        });
+                    }
+                }
+            }
+            return data;
+        }
+
+        // Initialize / Restart game
+        function startGame() {
+            playerHP = 100;
+            gold = 0;
+            currentStage = 0;
+            
+            inventory = {
+                potion: 0,
+                crystal: 0,
+                amulet: 0
+            };
+
+            correctCount = 0;
+            potionsUsed = 0;
+            
+            updateStatsUI();
+            closeBackpack();
+            
+            shopScreen.classList.remove('active');
+            gameoverOverlay.style.display = 'none';
+            victoryOverlay.style.display = 'none';
+
+            loadStage();
+            gameActive = true;
+        }
+
+        // Load specific level stage
+        function loadStage() {
+            const currentMonster = MONSTERS[currentStage];
+            monsterHP = currentMonster.hp;
+            
+            stageIndicator.innerText = `STAGE ${currentStage + 1} / 5`;
+            monsterName.innerText = `${currentMonster.emoji} ${currentMonster.name}`;
+            monsterAvatar.innerText = currentMonster.emoji;
+
+            // Reset states
+            monsterAvatar.className = 'avatar';
+            playerAvatar.className = 'avatar';
+            feedbackText.innerText = '';
+            
+            updateHPBars();
+            loadQuestion();
+        }
+
+        // Load single trivia question from list
+        function loadQuestion() {
+            if (questions.length === 0) return;
+
+            // Get random question
+            const rndQ = questions[Math.floor(Math.random() * questions.length)];
+            currentQuestion = rndQ;
+
+            questionText.innerText = rndQ.question;
+            
+            // Build options array
+            const options = [rndQ.correct, ...rndQ.incorrect];
+            const shuffledOptions = shuffle(options);
+
+            optionsGrid.innerHTML = '';
+            
+            const alphabet = ['A', 'B', 'C', 'D'];
+            shuffledOptions.forEach((option, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `
+                    <span class="option-letter">${alphabet[idx]}</span>
+                    <span>${option}</span>
+                `;
+                btn.onclick = () => selectOption(btn, option);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        // Option selected callback
+        function selectOption(btn, selectedVal) {
+            // Block options buttons
+            const btns = document.querySelectorAll('.option-btn');
+            btns.forEach(b => b.disabled = true);
+
+            const isCorrect = (selectedVal === currentQuestion.correct);
+
+            if (isCorrect) {
+                // Correct match
+                correctCount++;
+                playSound('correct');
+                
+                // Visual Correct Flash border
+                battleArena.classList.remove('correct-flash');
+                void battleArena.offsetWidth;
+                battleArena.classList.add('correct-flash');
+                
+                btn.classList.add('correct-choice');
+                playerAvatar.classList.add('attack-left');
+                setTimeout(() => playerAvatar.classList.remove('attack-left'), 250);
+
+                // Calculate damage: crystal active or standard
+                let damage = 25;
+                if (inventory.crystal > 0) {
+                    damage = 50;
+                    inventory.crystal--;
+                    updateStatsUI();
+                    playSound('crit');
+
+                    // Critical Visual triggers
+                    battleArena.classList.add('critical-flash');
+                    critText.classList.add('show');
+                    setTimeout(() => {
+                        battleArena.classList.remove('critical-flash');
+                        critText.classList.remove('show');
+                    }, 500);
+                } else {
+                    playSound('attack');
+                }
+
+                // Monster damage animation
+                monsterAvatar.classList.add('hurt');
+                setTimeout(() => monsterAvatar.classList.remove('hurt'), 250);
+
+                monsterHP = Math.max(0, monsterHP - damage);
+                updateHPBars();
+                
+                // Add 5 Gold
+                addGold(5);
+
+                feedbackText.style.color = 'var(--hp-green)';
+                feedbackText.innerText = `✓ 答對了！怪物受到 -${damage} 傷害！`;
+
+                setTimeout(() => {
+                    if (monsterHP <= 0) {
+                        defeatMonster();
+                    } else {
+                        btns.forEach(b => b.disabled = false);
+                        feedbackText.innerText = '';
+                        loadQuestion();
+                    }
+                }, 1000);
+
+            } else {
+                // Incorrect match
+                playSound('hurt');
+                
+                // Visual Wrong screen shake
+                phone.classList.remove('shake');
+                void phone.offsetWidth;
+                phone.classList.add('shake');
+                setTimeout(() => phone.classList.remove('shake'), 300);
+
+                btn.classList.add('wrong-choice');
+                
+                // Highlight correct button
+                btns.forEach(b => {
+                    if (b.innerText.substring(2).trim() === currentQuestion.correct) {
+                        b.classList.add('correct-choice');
+                    }
+                });
+
+                monsterAvatar.classList.add('attack-right');
+                setTimeout(() => monsterAvatar.classList.remove('attack-right'), 250);
+
+                playerAvatar.classList.add('hurt');
+                setTimeout(() => playerAvatar.classList.remove('hurt'), 250);
+
+                // Player take damage
+                playerHP = Math.max(0, playerHP - 25);
+                updateHPBars();
+
+                feedbackText.style.color = 'var(--hp-red)';
+                feedbackText.innerText = `❌ 答錯了！受傷 -25 HP，正確答案是：${currentQuestion.correct}`;
+
+                setTimeout(() => {
+                    if (playerHP <= 0) {
+                        handlePlayerDeath();
+                    } else {
+                        // Restore buttons
+                        optionsGrid.innerHTML = '';
+                        feedbackText.innerText = '';
+                        loadQuestion();
+                    }
+                }, 2000); // 2 seconds display correct answer penalty
+            }
+        }
+
+        // Add gold animation helper
+        function addGold(amount) {
+            gold += amount;
+            goldVal.innerText = gold;
+            shopGoldVal.innerText = gold;
+
+            goldCounter.classList.remove('bounce');
+            void goldCounter.offsetWidth;
+            goldCounter.classList.add('bounce');
+            setTimeout(() => goldCounter.classList.remove('bounce'), 150);
+            playSound('coin');
+        }
+
+        // Defeated monster event
+        function defeatMonster() {
             playSound('victory');
             
-            const startTimestamp = parseInt(localStorage.getItem('adventure_start') || Date.now().toString());
-            const totalSeconds = Math.max(0, Math.floor((Date.now() - startTimestamp) / 1000));
+            // Defeat extra gold random drop
+            const dropGold = Math.floor(Math.random() * 31) + 20; // 20 to 50
             
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            const minStr = minutes.toString().padStart(2, '0');
-            const secStr = seconds.toString().padStart(2, '0');
-            
-            document.getElementById('totalDurationText').innerText = `${minStr} 分 ${secStr} 秒`;
-            document.getElementById('victoryOverlay').style.display = 'flex';
-            
-            startFireworks();
+            feedbackText.style.color = 'var(--gold-color)';
+            feedbackText.innerText = `🎉 擊敗了 ${MONSTERS[currentStage].name}！拾獲金幣 +${dropGold} 💰！`;
+
+            addGold(dropGold);
+
+            setTimeout(() => {
+                if (currentStage >= 4) {
+                    showVictory();
+                } else {
+                    enterShop();
+                }
+            }, 1200);
         }
 
-        function restartAdventure() {
+        // Enter Stage Intermission Shop
+        function enterShop() {
+            closeBackpack();
+            updateShopButtons();
+            shopScreen.classList.add('active');
+        }
+
+        // Leave Shop, advance to next stage
+        function leaveShop() {
+            playSound('page');
+            shopScreen.classList.remove('active');
+            currentStage++;
+            loadStage();
+        }
+
+        // Refresh shop buttons disabled/enabled
+        function updateShopButtons() {
+            document.getElementById('buy-potion-btn').disabled = (gold < 30);
+            document.getElementById('buy-crystal-btn').disabled = (gold < 40);
+            document.getElementById('buy-amulet-btn').disabled = (gold < 80);
+        }
+
+        // Buy items
+        function buyItem(itemType, cost) {
+            if (gold >= cost) {
+                gold -= cost;
+                goldVal.innerText = gold;
+                shopGoldVal.innerText = gold;
+                
+                inventory[itemType]++;
+                playSound('coin');
+                
+                updateStatsUI();
+                updateShopButtons();
+            }
+        }
+
+        // Handle death trigger
+        function handlePlayerDeath() {
+            if (inventory.amulet > 0) {
+                // Consume Life Amulet
+                inventory.amulet--;
+                playerHP = 1;
+                updateStatsUI();
+                updateHPBars();
+                
+                playSound('revive');
+                feedbackText.style.color = 'var(--accent-cyan)';
+                feedbackText.innerText = `🛡️ 救命符自動觸發！抵擋致命一擊，保留 1 滴血復活！`;
+
+                setTimeout(() => {
+                    feedbackText.innerText = '';
+                    optionsGrid.innerHTML = '';
+                    loadQuestion();
+                }, 2000);
+            } else {
+                // Check if current HP was already 1 (meaning they died again at HP 1)
+                // Wait, if HP was 1, they take 25 damage, HP is 0. If no amulet, check how they died.
+                // Rule: "沒救命符 → 重來該關，HP 設成 1（懲罰）"
+                // "已 HP 1 又死且無符 → Game Over 紅底畫面 + 重新開始"
+                
+                // Let's store a state to track if player had HP 1 when this battle turn started.
+                // Wait! Since playerHP is set to 1, we can simply detect if they were penalized.
+                // Let's check: was playerHP already 1 when they took the hit?
+                // Yes, if their HP before hitting 0 was 1 (which means they died, revived to 1, or got set to 1 penalty).
+                // Let's check the global penalty tracker:
+                if (playerHP === 0 && window.wasHP1PenaltyActive) {
+                    // Truly dead. Game Over.
+                    playSound('die');
+                    gameActive = false;
+                    window.wasHP1PenaltyActive = false;
+                    
+                    gameoverSubtitle.innerText = `於第 ${currentStage + 1} 關被 ${MONSTERS[currentStage].name} 擊殺！兩次在 1 點血量時死亡，挑戰失敗！`;
+                    gameoverOverlay.style.display = 'flex';
+                } else {
+                    // Penalized to HP 1, restart level
+                    playSound('die');
+                    playerHP = 1;
+                    window.wasHP1PenaltyActive = true; // Set flag
+                    updateHPBars();
+                    
+                    feedbackText.style.color = 'var(--hp-red)';
+                    feedbackText.innerText = `💀 體力歸零！無救命符！懲罰：重開本關且 HP 設為 1 滴血！`;
+
+                    setTimeout(() => {
+                        feedbackText.innerText = '';
+                        optionsGrid.innerHTML = '';
+                        loadStage();
+                    }, 2200);
+                }
+            }
+        }
+
+        // Show game end victory
+        function showVictory() {
+            // Write certificate to localStorage
+            localStorage.setItem('cert_warrior', 'true');
+            
+            playSound('victory');
+            gameActive = false;
+            
+            finalCorrect.innerText = `${correctCount} 題`;
+            finalGold.innerText = `${gold} 💰`;
+            finalPotions.innerText = `${potionsUsed} 瓶`;
+            
+            victoryOverlay.style.display = 'flex';
+        }
+
+        function restartGame() {
+            playSound('page');
+            window.wasHP1PenaltyActive = false;
+            startGame();
+        }
+
+        // Update stats quantities
+        function updateStatsUI() {
+            potionCount.innerText = inventory.potion;
+            bpPotionQty.innerText = inventory.potion;
+            bpCrystalQty.innerText = inventory.crystal;
+            bpAmuletQty.innerText = inventory.amulet;
+
+            // Enable/disable backpack drink button
+            usePotionBtn.disabled = (inventory.potion === 0 || playerHP >= 100);
+
+            // Buff active icons
+            buffCrystal.style.display = (inventory.crystal > 0) ? 'flex' : 'none';
+            buffAmulet.style.display = (inventory.amulet > 0) ? 'flex' : 'none';
+        }
+
+        // Drink potion
+        function usePotion() {
+            if (inventory.potion > 0 && playerHP < 100) {
+                inventory.potion--;
+                potionsUsed++;
+                
+                playerHP = Math.min(100, playerHP + 50);
+                playSound('heal');
+                
+                // Clear HP 1 penalty flag on healing to keep it fair!
+                window.wasHP1PenaltyActive = false;
+                
+                updateStatsUI();
+                updateHPBars();
+                
+                feedbackText.style.color = 'var(--hp-green)';
+                feedbackText.innerText = `🧪 飲用紅藥水！生命恢復 +50 HP！`;
+                setTimeout(() => {
+                    if (gameActive && feedbackText.innerText.includes('紅藥水')) {
+                        feedbackText.innerText = '';
+                    }
+                }, 1500);
+            }
+        }
+
+        // Update HP Bars dimensions & colors
+        function updateHPBars() {
+            // Player HP
+            playerHpBar.style.width = `${playerHP}%`;
+            playerHpText.innerText = `${playerHP} / 100`;
+            
+            playerHpBar.classList.remove('hp-flash');
+            if (playerHP > 50) {
+                playerHpBar.style.backgroundColor = 'var(--hp-green)';
+            } else if (playerHP > 20) {
+                playerHpBar.style.backgroundColor = 'var(--hp-yellow)';
+            } else {
+                playerHpBar.style.backgroundColor = 'var(--hp-red)';
+                if (playerHP > 0) playerHpBar.classList.add('hp-flash');
+            }
+
+            // Monster HP
+            monsterHpBar.style.width = `${monsterHP}%`;
+            monsterHpText.innerText = `${monsterHP} / 100`;
+            
+            monsterHpBar.classList.remove('hp-flash');
+            if (monsterHP > 50) {
+                monsterHpBar.style.backgroundColor = 'var(--hp-green)';
+            } else if (monsterHP > 20) {
+                monsterHpBar.style.backgroundColor = 'var(--hp-yellow)';
+            } else {
+                monsterHpBar.style.backgroundColor = 'var(--hp-red)';
+                if (monsterHP > 0) monsterHpBar.classList.add('hp-flash');
+            }
+            
+            updateStatsUI();
+        }
+
+        // Modal triggers
+        function openBackpack() {
             playSound('button');
-            localStorage.removeItem('cert_dynasty');
-            localStorage.removeItem('cert_idiom');
-            localStorage.removeItem('cert_warrior');
-            localStorage.removeItem('adventure_start');
-            sessionStorage.removeItem('cover_shown'); // Reset cover
-            location.reload();
+            backpackModal.classList.add('active');
         }
 
-        function clearProgress() {
-            if (confirm('確定要清除所有遊戲進度，重新開始冒險嗎？')) {
-                restartAdventure();
+        function closeBackpack() {
+            if (backpackModal.classList.contains('active')) {
+                playSound('button');
+                backpackModal.classList.remove('active');
             }
         }
 
-        // Golden Victory Fireworks
-        const canvasV = document.getElementById('victoryCanvas');
-        const ctxV = canvasV.getContext('2d');
-        let fireworkParticles = [];
-
-        function resizeVictoryCanvas() {
-            canvasV.width = window.innerWidth;
-            canvasV.height = window.innerHeight;
-        }
-
-        window.addEventListener('resize', resizeVictoryCanvas);
-
-        function startFireworks() {
-            resizeVictoryCanvas();
-            fireworkParticles = [];
-            
-            function spawnFirework() {
-                if (document.getElementById('victoryOverlay').style.display === 'none') return;
-                
-                const sx = Math.random() * canvasV.width;
-                const sy = Math.random() * (canvasV.height * 0.6) + (canvasV.height * 0.1);
-                const colors = ['#00e5ff', '#ff007f', '#ffd700', '#2ecc71', '#ffffff'];
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                
-                for (let i = 0; i < 30; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 5 + 2;
-                    fireworkParticles.push({
-                        x: sx,
-                        y: sy,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        size: Math.random() * 3.5 + 1.5,
-                        color: color,
-                        alpha: 1,
-                        decay: Math.random() * 0.015 + 0.01
-                    });
-                }
-                setTimeout(spawnFirework, Math.random() * 500 + 300);
-            }
-
-            spawnFirework();
-            animateFireworks();
-        }
-
-        function animateFireworks() {
-            if (document.getElementById('victoryOverlay').style.display === 'none') return;
-
-            ctxV.fillStyle = 'rgba(10, 9, 21, 0.15)';
-            ctxV.fillRect(0, 0, canvasV.width, canvasV.height);
-
-            for (let i = fireworkParticles.length - 1; i >= 0; i--) {
-                const p = fireworkParticles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy += 0.05;
-                p.alpha -= p.decay;
-
-                if (p.alpha <= 0) {
-                    fireworkParticles.splice(i, 1);
-                    continue;
-                }
-
-                ctxV.save();
-                ctxV.globalAlpha = p.alpha;
-                ctxV.fillStyle = p.color;
-                ctxV.shadowBlur = 8;
-                ctxV.shadowColor = p.color;
-                ctxV.beginPath();
-                ctxV.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctxV.fill();
-                ctxV.restore();
-            }
-
-            victoryAnimId = requestAnimationFrame(animateFireworks);
-        }
-
-        // On Load initializers
-        initCover();
-        checkProgress();
+        // Start Fetch
+        fetchQuestions();
     </script>
 </body>
 </html>
