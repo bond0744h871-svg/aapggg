@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>跨越時空大冒險 ── 大冒險地圖</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #0a0915;
+            --bg-card: rgba(22, 19, 41, 0.65);
+            --bg-modal: rgba(20, 18, 38, 0.95);
+            --text-primary: #f1f0fb;
+            --text-muted: #79739a;
+            
+            --accent-cyan: #00e5ff;
+            --accent-pink: #ff007f;
+            --accent-gold: #ffd700;
+            --completed-green: #2ecc71;
+            
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --font-primary: 'Noto Sans TC', sans-serif;
+            --font-heading: 'Orbitron', sans-serif;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.04) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(20, 18, 38, 1) 0%, var(--bg-page) 100%);
+            padding: 2rem 1rem;
+        }
+
+        /* 1. Cover Overlay Screen */
+        .cover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.6s ease-out, visibility 0.6s;
+            overflow: hidden;
+        }
+
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #000;
+        }
+
+        .cover-prompt {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 229, 255, 0.5);
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+        }
+
+        /* Top Header Area */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-title-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+
+        .header-emoji {
+            font-size: 2.2rem;
+            animation: bounce 2s infinite;
+        }
+
+        header h1 {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, #fff 30%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            letter-spacing: 1px;
+            max-width: 500px;
+        }
+
+        /* Consolidated Top Right Info Bar */
+        .top-info-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: rgba(22, 19, 41, 0.7);
+            border: 1px solid var(--glass-border);
+            padding: 0.6rem 1.2rem;
+            border-radius: 12px;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .info-badges-count {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+        }
+
+        .info-badges-count span {
+            color: var(--accent-gold);
+            font-family: var(--font-heading);
+            font-weight: 900;
+            font-size: 1.15rem;
+        }
+
+        .btn-clear-progress {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.88rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-clear-progress:hover {
+            background: rgba(255, 0, 127, 0.1);
+            border-color: var(--accent-pink);
+            color: var(--accent-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.15);
+        }
+
+        /* Map & Grid Container */
+        .map-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 1rem auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1920 / 1080;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border-radius: 16px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            overflow: hidden;
+            background: #000;
+        }
+
+        .map-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Transparent hotzones positioned precisely on image nameplates */
+        .hotzone {
+            position: absolute;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        /* Subtle golden glow on hover to respect parchment theme */
+        .hotzone:hover {
+            background: rgba(212, 175, 55, 0.06);
+            box-shadow: 0 0 18px rgba(212, 175, 55, 0.45);
+            border: 1.5px solid rgba(212, 175, 55, 0.3);
+        }
+
+        /* Completed Stamp on top corner of nameplates */
+        .stamp-completed {
+            position: absolute;
+            right: -8px;
+            top: -8px;
+            background: var(--completed-green);
+            color: #0c0b15;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 900;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
+            border: 2px solid var(--text-primary);
+            z-index: 15;
+            animation: stampZoom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Overlay/Modal Dialog CSS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(6, 5, 12, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn 0.35s ease-out;
+        }
+
+        .gate-modal-card {
+            background: var(--bg-modal);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0, 229, 255, 0.22);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            position: relative;
+            animation: slideUp 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 0.8rem;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-close-modal:hover {
+            color: var(--accent-pink);
+        }
+
+        .modal-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Slots inside the Gate modal */
+        .gate-slots-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .gate-slot {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 1rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            min-height: 110px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .gate-slot.drag-hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 229, 255, 0.05);
+            transform: scale(1.03);
+        }
+
+        .gate-slot.correct-filled {
+            border: 2.5px solid var(--completed-green);
+            background: rgba(46, 204, 113, 0.08);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+        }
+
+        .slot-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .gate-slot.correct-filled .slot-label {
+            color: var(--completed-green);
+        }
+
+        .slot-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.15);
+            transition: var(--transition);
+        }
+
+        .gate-slot.correct-filled .slot-circle {
+            background: rgba(46, 204, 113, 0.15);
+            border-color: var(--completed-green);
+            color: #fff;
+            animation: stampZoom 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Backpack/Inventory list inside modal */
+        .backpack-section {
+            background: rgba(0, 0, 0, 0.22);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+        }
+
+        .backpack-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .backpack-slots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.25rem;
+            min-height: 80px;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .empty-backpack-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Draggable Badge Card */
+        .badge-card {
+            width: 76px;
+            height: 76px;
+            background: rgba(30, 27, 54, 0.85);
+            border: 1px solid rgba(0, 229, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            cursor: grab;
+            transition: transform 0.15s, border-color 0.2s;
+            touch-action: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        }
+
+        .badge-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .badge-card:active {
+            cursor: grabbing;
+        }
+
+        .badge-icon {
+            font-size: 1.8rem;
+        }
+
+        .badge-name {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        /* Floating duplicate element during drag */
+        .floating-badge {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            width: 76px;
+            height: 76px;
+            background: rgba(30, 27, 54, 0.95);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            box-shadow: 0 10px 25px rgba(0, 229, 255, 0.45);
+            transform: scale(1.1);
+        }
+
+        .floating-badge .badge-icon {
+            font-size: 1.8rem;
+        }
+
+        .floating-badge .badge-name {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        /* Animations */
+        .wrong-flash {
+            animation: shakeRed 0.3s ease-in-out;
+            border-color: var(--accent-pink) !important;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.25) !important;
+        }
+
+        @keyframes shakeRed {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        @keyframes stampZoom {
+            0% { transform: scale(1.8) rotate(-10deg); opacity: 0.4; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Victory Overlay screen */
+        .victory-overlay-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(185deg, #0d0c1b 0%, #06050b 100%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .victory-card-box {
+            border: 2px solid var(--accent-gold);
+            background: rgba(22, 19, 41, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 28px;
+            padding: 3.5rem 2.5rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.18);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            animation: slideUp 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .victory-trophy {
+            font-size: 5rem;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
+            animation: bounce 2s infinite;
+        }
+
+        .victory-title {
+            font-family: var(--font-heading);
+            font-size: 2.4rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            letter-spacing: 2px;
+        }
+
+        .victory-subtitle {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-summary-card {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--glass-border);
+            padding: 1.25rem 2rem;
+            border-radius: 16px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-summary-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.05rem;
+        }
+
+        .stat-summary-val {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .btn-restart-adventure {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #d4af37 100%);
+            color: #0c0b15;
+            border: none;
+            font-family: inherit;
+            font-weight: 900;
+            font-size: 1.2rem;
+            padding: 0.9rem 2.5rem;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .btn-restart-adventure:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+        }
+
+        .victory-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Responsive UI Adjustments */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            .top-info-bar {
+                position: static;
+                margin-bottom: 1.5rem;
+                width: 100%;
+                max-width: 100%;
+                justify-content: space-between;
+            }
+            body {
+                padding-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. FULL-SCREEN COVER SCREEN -->
+    <div class="cover-overlay" id="coverScreen" onclick="fadeOutCover()">
+        <img src="cover.png" class="cover-image" alt="Game Cover">
+        <div class="cover-prompt">── 點擊任意地方開啟大冒險 ──</div>
+    </div>
+
+    <!-- 2. CONSOLIDATED TOP-RIGHT INFO BAR -->
+    <div class="top-info-bar">
+        <div class="info-badges-count">持有憑證：<span id="certCountText">0 / 3</span></div>
+        <button class="btn-clear-progress" onclick="clearProgress()">🔄 清除進度</button>
+    </div>
+
+    <!-- 3. TOP TITLE HEADER -->
+    <header>
+        <div class="header-title-container">
+            <span class="header-emoji">🗺️</span>
+            <h1>大冒險地圖</h1>
+        </div>
+        <p>完成 3 個關卡，拿到 3 個憑證解開大門大鎖！</p>
+    </header>
+
+    <!-- 4. ADVENTURE PARCHMENT MAP AREA (Fits Contain) -->
+    <div class="map-container">
+        <div class="map-wrapper">
+            <img src="map-bg.png" class="map-image" alt="Adventure Map">
+            
+            <!-- Hotzone 1: Dynasty Palace (朝代對應殿) -->
+            <a href="../示範1_朝代配對/index.html" class="hotzone" id="hz-dynasty" style="left: 9.3%; top: 36.8%; width: 16.0%; height: 7.2%;" onclick="playSound('button')">
+                <div class="stamp-completed" id="stamp-dynasty" style="display: none;">✓</div>
+            </a>
+            
+            <!-- Hotzone 2: Idiom Wood (成語秘字林) -->
+            <a href="../示範2_成語填字/index.html" class="hotzone" id="hz-idiom" style="left: 73.7%; top: 39.7%; width: 16.0%; height: 7.2%;" onclick="playSound('button')">
+                <div class="stamp-completed" id="stamp-idiom" style="display: none;">✓</div>
+            </a>
+            
+            <!-- Hotzone 3: Monster plains (魔物試煉原) -->
+            <a href="../示範3_打怪RPG/index.html" class="hotzone" id="hz-warrior" style="left: 12.3%; top: 88.0%; width: 16.0%; height: 7.2%;" onclick="playSound('button')">
+                <div class="stamp-completed" id="stamp-warrior" style="display: none;">✓</div>
+            </a>
+            
+            <!-- Hotzone 4: Central Gate (三印天門) -->
+            <div class="hotzone" id="hz-gate" style="left: 37.8%; top: 61.8%; width: 24.4%; height: 11.2%;" onclick="openGateModal()"></div>
+        </div>
+    </div>
+
+    <!-- 5. GATE UNLOCK MODAL DIALOG -->
+    <div class="modal-overlay" id="gateModal" style="display: none;">
+        <div class="gate-modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">🔒 通關大門</h2>
+                <button class="btn-close-modal" onclick="closeGateModal()">&times;</button>
+            </div>
+            
+            <p class="modal-description">請將下方的憑證徽章拖曳放入正確的上方凹槽以解鎖大門：</p>
+            
+            <!-- Slots -->
+            <div class="gate-slots-container">
+                <div class="gate-slot" data-type="dynasty" id="slot-dynasty">
+                    <span class="slot-label">朝代之印</span>
+                    <div class="slot-circle">？</div>
+                </div>
+                <div class="gate-slot" data-type="idiom" id="slot-idiom">
+                    <span class="slot-label">成語之印</span>
+                    <div class="slot-circle">？</div>
+                </div>
+                <div class="gate-slot" data-type="warrior" id="slot-warrior">
+                    <span class="slot-label">勇者之印</span>
+                    <div class="slot-circle">？</div>
+                </div>
+            </div>
+            
+            <!-- Backpack/Inventory -->
+            <div class="backpack-section">
+                <h3 class="backpack-title">🎒 冒險行囊 (憑證徽章)</h3>
+                <div class="backpack-slots" id="backpackBadges">
+                    <!-- Dynamic badges go here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. VICTORY SUCCESS OVERLAY SCREEN -->
+    <div class="victory-overlay-screen" id="victoryOverlay" style="display: none;">
+        <canvas class="victory-canvas" id="victoryCanvas"></canvas>
+        <div class="victory-card-box">
+            <div class="victory-trophy">🏆</div>
+            <h2 class="victory-title">冒險完成！</h2>
+            <p class="victory-subtitle">恭喜您！順利解開了所有難關，成功打開通關大門，完成了這場跨越時空的大挑戰！</p>
+            
+            <div class="stats-summary-card">
+                <div class="stat-summary-line">
+                    <span>完成關卡數：</span>
+                    <span class="stat-summary-val" style="color: var(--accent-gold);">3 / 3</span>
+                </div>
+                <div class="stat-summary-line">
+                    <span>總冒險時長：</span>
+                    <span class="stat-summary-val" id="totalDurationText">00 分 00 秒</span>
+                </div>
+            </div>
+            
+            <button class="btn-restart-adventure" onclick="restartAdventure()">再次冒險</button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logical Controller -->
+    <script>
+        const certKeys = {
+            dynasty: 'cert_dynasty',
+            idiom: 'cert_idiom',
+            warrior: 'cert_warrior'
+        };
+
+        let certificates = {
+            dynasty: false,
+            idiom: false,
+            warrior: false
+        };
+
+        let slotsState = {
+            dynasty: false,
+            idiom: false,
+            warrior: false
+        };
+
+        // Cover screen fade-out handler
+        function fadeOutCover() {
+            const cover = document.getElementById('coverScreen');
+            cover.style.opacity = '0';
+            cover.style.pointerEvents = 'none';
+            sessionStorage.setItem('cover_shown', 'true');
+            playSound('button');
+            setTimeout(() => {
+                cover.style.display = 'none';
+            }, 600);
+        }
+
+        // Initialize cover screen loading
+        function initCover() {
+            const cover = document.getElementById('coverScreen');
+            if (sessionStorage.getItem('cover_shown') === 'true') {
+                cover.style.display = 'none';
+            } else {
+                cover.style.display = 'flex';
+            }
+        }
+
+        // Initialize Adventure start time on first loading
+        if (!localStorage.getItem('adventure_start')) {
+            localStorage.setItem('adventure_start', Date.now().toString());
+        }
+
+        // Check completion progress
+        function checkProgress() {
+            certificates.dynasty = localStorage.getItem(certKeys.dynasty) === 'true';
+            certificates.idiom = localStorage.getItem(certKeys.idiom) === 'true';
+            certificates.warrior = localStorage.getItem(certKeys.warrior) === 'true';
+
+            let count = 0;
+            if (certificates.dynasty) {
+                document.getElementById('stamp-dynasty').style.display = 'flex';
+                count++;
+            } else {
+                document.getElementById('stamp-dynasty').style.display = 'none';
+            }
+            if (certificates.idiom) {
+                document.getElementById('stamp-idiom').style.display = 'flex';
+                count++;
+            } else {
+                document.getElementById('stamp-idiom').style.display = 'none';
+            }
+            if (certificates.warrior) {
+                document.getElementById('stamp-warrior').style.display = 'flex';
+                count++;
+            } else {
+                document.getElementById('stamp-warrior').style.display = 'none';
+            }
+
+            document.getElementById('certCountText').innerText = `${count} / 3`;
+        }
+
+        // Web Audio API Sound Synthesizer
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            if (!audioCtx) return;
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const now = audioCtx.currentTime;
+
+            if (type === 'button') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'correct') {
+                const osc2 = audioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(783.99, now + 0.03);
+                
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                
+                osc.connect(gain);
+                osc2.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc2.start(now);
+                osc.stop(now + 0.4);
+                osc2.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(130, now);
+                osc.frequency.linearRampToValueAtTime(70, now + 0.18);
+                
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(220, now);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                
+                osc.start(now);
+                osc.stop(now + 0.22);
+            } else if (type === 'victory') {
+                const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+                scale.forEach((freq, idx) => {
+                    const singleOsc = audioCtx.createOscillator();
+                    const singleGain = audioCtx.createGain();
+                    singleOsc.type = 'sine';
+                    singleOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    
+                    singleGain.gain.setValueAtTime(0.08, now + idx * 0.08);
+                    singleGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+                    
+                    singleOsc.connect(singleGain);
+                    singleGain.connect(audioCtx.destination);
+                    
+                    singleOsc.start(now + idx * 0.08);
+                    singleOsc.stop(now + idx * 0.08 + 0.35);
+                });
+            }
+        }
+
+        // Modal Operations
+        function openGateModal() {
+            playSound('button');
+            document.getElementById('gateModal').style.display = 'flex';
+            renderGateSlots();
+            renderBackpackBadges();
+        }
+
+        function closeGateModal() {
+            playSound('button');
+            document.getElementById('gateModal').style.display = 'none';
+        }
+
+        function renderGateSlots() {
+            const types = ['dynasty', 'idiom', 'warrior'];
+            types.forEach(t => {
+                const slot = document.getElementById(`slot-${t}`);
+                if (slotsState[t]) {
+                    slot.classList.add('correct-filled');
+                    const emoji = t === 'dynasty' ? '🎴' : (t === 'idiom' ? '📝' : '⚔️');
+                    slot.querySelector('.slot-circle').innerHTML = emoji;
+                } else {
+                    slot.classList.remove('correct-filled');
+                    slot.querySelector('.slot-circle').innerHTML = '？';
+                }
+            });
+        }
+
+        function renderBackpackBadges() {
+            const container = document.getElementById('backpackBadges');
+            container.innerHTML = '';
+            
+            let hasAny = false;
+            
+            if (certificates.dynasty && !slotsState.dynasty) {
+                container.appendChild(createBadgeElement('dynasty', '🎴', '朝代之印'));
+                hasAny = true;
+            }
+            if (certificates.idiom && !slotsState.idiom) {
+                container.appendChild(createBadgeElement('idiom', '📝', '成語之印'));
+                hasAny = true;
+            }
+            if (certificates.warrior && !slotsState.warrior) {
+                container.appendChild(createBadgeElement('warrior', '⚔️', '勇者之印'));
+                hasAny = true;
+            }
+            
+            if (!hasAny) {
+                container.innerHTML = '<div class="empty-backpack-text">行囊中目前沒有可放置的憑證</div>';
+            }
+        }
+
+        function createBadgeElement(type, emoji, name) {
+            const badge = document.createElement('div');
+            badge.className = 'badge-card';
+            badge.dataset.type = type;
+            badge.innerHTML = `
+                <div class="badge-icon">${emoji}</div>
+                <div class="badge-name">${name}</div>
+            `;
+            badge.addEventListener('pointerdown', onBadgePointerDown);
+            return badge;
+        }
+
+        // Pointer Drag and Drop engine
+        let activeBadge = null;
+        let floatingBadge = null;
+        let activePointerId = null;
+        let startX = 0;
+        let startY = 0;
+
+        function onBadgePointerDown(e) {
+            if (e.button !== undefined && e.button !== 0) return;
+            
+            activeBadge = e.currentTarget;
+            activePointerId = e.pointerId;
+            
+            initAudio();
+            
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            const badgeRect = activeBadge.getBoundingClientRect();
+            activeBadge.style.opacity = '0.3';
+            
+            floatingBadge = document.createElement('div');
+            floatingBadge.className = 'floating-badge';
+            floatingBadge.innerHTML = activeBadge.innerHTML;
+            floatingBadge.style.left = badgeRect.left + 'px';
+            floatingBadge.style.top = badgeRect.top + 'px';
+            
+            floatingBadge.dataset.offsetX = startX - badgeRect.left;
+            floatingBadge.dataset.offsetY = startY - badgeRect.top;
+            
+            document.body.appendChild(floatingBadge);
+            
+            window.addEventListener('pointermove', onBadgePointerMove);
+            window.addEventListener('pointerup', onBadgePointerUp);
+            window.addEventListener('pointercancel', onBadgePointerCancel);
+            
+            e.preventDefault();
+        }
+
+        function onBadgePointerMove(e) {
+            if (!floatingBadge || e.pointerId !== activePointerId) return;
+            
+            const ox = parseFloat(floatingBadge.dataset.offsetX);
+            const oy = parseFloat(floatingBadge.dataset.offsetY);
+            
+            const px = e.clientX - ox;
+            const py = e.clientY - oy;
+            
+            floatingBadge.style.left = px + 'px';
+            floatingBadge.style.top = py + 'px';
+            
+            const cx = e.clientX;
+            const cy = e.clientY;
+            const slots = document.querySelectorAll('.gate-slot');
+            
+            slots.forEach(slot => {
+                const rect = slot.getBoundingClientRect();
+                if (cx >= rect.left && cx <= rect.right &&
+                    cy >= rect.top && cy <= rect.bottom) {
+                    slot.classList.add('drag-hover');
+                } else {
+                    slot.classList.remove('drag-hover');
+                }
+            });
+        }
+
+        function onBadgePointerUp(e) {
+            if (e.pointerId !== activePointerId) return;
+            
+            const cx = e.clientX;
+            const cy = e.clientY;
+            
+            const slots = document.querySelectorAll('.gate-slot');
+            let droppedSlot = null;
+            
+            for (const slot of slots) {
+                const rect = slot.getBoundingClientRect();
+                if (cx >= rect.left && cx <= rect.right &&
+                    cy >= rect.top && cy <= rect.bottom) {
+                    droppedSlot = slot;
+                    break;
+                }
+            }
+            
+            if (droppedSlot) {
+                droppedSlot.classList.remove('drag-hover');
+                
+                const badgeType = activeBadge.dataset.type;
+                const slotType = droppedSlot.dataset.type;
+                
+                if (badgeType === slotType) {
+                    playSound('correct');
+                    slotsState[badgeType] = true;
+                    
+                    droppedSlot.classList.add('correct-filled');
+                    const emoji = badgeType === 'dynasty' ? '🎴' : (badgeType === 'idiom' ? '📝' : '⚔️');
+                    droppedSlot.querySelector('.slot-circle').innerHTML = emoji;
+                    
+                    floatingBadge.remove();
+                    floatingBadge = null;
+                    
+                    activeBadge.remove();
+                    
+                    checkGateUnlock();
+                } else {
+                    playSound('wrong');
+                    droppedSlot.classList.add('wrong-flash');
+                    setTimeout(() => {
+                        droppedSlot.classList.remove('wrong-flash');
+                    }, 300);
+                    
+                    snapBack();
+                }
+            } else {
+                playSound('wrong');
+                snapBack();
+            }
+            
+            cleanBadgeDrag();
+        }
+
+        function onBadgePointerCancel(e) {
+            if (e.pointerId !== activePointerId) return;
+            snapBack();
+            cleanBadgeDrag();
+        }
+
+        function snapBack() {
+            if (floatingBadge && activeBadge) {
+                const badgeRect = activeBadge.getBoundingClientRect();
+                floatingBadge.style.transition = 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                floatingBadge.style.left = badgeRect.left + 'px';
+                floatingBadge.style.top = badgeRect.top + 'px';
+                
+                const fCopy = floatingBadge;
+                const aCopy = activeBadge;
+                floatingBadge = null;
+                
+                setTimeout(() => {
+                    if (fCopy) fCopy.remove();
+                    if (aCopy) aCopy.style.opacity = '1';
+                }, 300);
+            }
+        }
+
+        function cleanBadgeDrag() {
+            window.removeEventListener('pointermove', onBadgePointerMove);
+            window.removeEventListener('pointerup', onBadgePointerUp);
+            window.removeEventListener('pointercancel', onBadgePointerCancel);
+            
+            if (activeBadge && !floatingBadge) {
+                activeBadge.style.opacity = '1';
+            }
+            activePointerId = null;
+        }
+
+        // Check slots verification to trigger victory
+        function checkGateUnlock() {
+            if (slotsState.dynasty && slotsState.idiom && slotsState.warrior) {
+                setTimeout(() => {
+                    closeGateModal();
+                    showVictoryScreen();
+                }, 800);
+            }
+        }
+
+        // Victory Screen Setup
+        let victoryAnimId = null;
+        function showVictoryScreen() {
+            playSound('victory');
+            
+            const startTimestamp = parseInt(localStorage.getItem('adventure_start') || Date.now().toString());
+            const totalSeconds = Math.max(0, Math.floor((Date.now() - startTimestamp) / 1000));
+            
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const minStr = minutes.toString().padStart(2, '0');
+            const secStr = seconds.toString().padStart(2, '0');
+            
+            document.getElementById('totalDurationText').innerText = `${minStr} 分 ${secStr} 秒`;
+            document.getElementById('victoryOverlay').style.display = 'flex';
+            
+            startFireworks();
+        }
+
+        function restartAdventure() {
+            playSound('button');
+            localStorage.removeItem('cert_dynasty');
+            localStorage.removeItem('cert_idiom');
+            localStorage.removeItem('cert_warrior');
+            localStorage.removeItem('adventure_start');
+            sessionStorage.removeItem('cover_shown'); // Reset cover
+            location.reload();
+        }
+
+        function clearProgress() {
+            if (confirm('確定要清除所有遊戲進度，重新開始冒險嗎？')) {
+                restartAdventure();
+            }
+        }
+
+        // Golden Victory Fireworks
+        const canvasV = document.getElementById('victoryCanvas');
+        const ctxV = canvasV.getContext('2d');
+        let fireworkParticles = [];
+
+        function resizeVictoryCanvas() {
+            canvasV.width = window.innerWidth;
+            canvasV.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeVictoryCanvas);
+
+        function startFireworks() {
+            resizeVictoryCanvas();
+            fireworkParticles = [];
+            
+            function spawnFirework() {
+                if (document.getElementById('victoryOverlay').style.display === 'none') return;
+                
+                const sx = Math.random() * canvasV.width;
+                const sy = Math.random() * (canvasV.height * 0.6) + (canvasV.height * 0.1);
+                const colors = ['#00e5ff', '#ff007f', '#ffd700', '#2ecc71', '#ffffff'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 5 + 2;
+                    fireworkParticles.push({
+                        x: sx,
+                        y: sy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: Math.random() * 3.5 + 1.5,
+                        color: color,
+                        alpha: 1,
+                        decay: Math.random() * 0.015 + 0.01
+                    });
+                }
+                setTimeout(spawnFirework, Math.random() * 500 + 300);
+            }
+
+            spawnFirework();
+            animateFireworks();
+        }
+
+        function animateFireworks() {
+            if (document.getElementById('victoryOverlay').style.display === 'none') return;
+
+            ctxV.fillStyle = 'rgba(10, 9, 21, 0.15)';
+            ctxV.fillRect(0, 0, canvasV.width, canvasV.height);
+
+            for (let i = fireworkParticles.length - 1; i >= 0; i--) {
+                const p = fireworkParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05;
+                p.alpha -= p.decay;
+
+                if (p.alpha <= 0) {
+                    fireworkParticles.splice(i, 1);
+                    continue;
+                }
+
+                ctxV.save();
+                ctxV.globalAlpha = p.alpha;
+                ctxV.fillStyle = p.color;
+                ctxV.shadowBlur = 8;
+                ctxV.shadowColor = p.color;
+                ctxV.beginPath();
+                ctxV.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctxV.fill();
+                ctxV.restore();
+            }
+
+            victoryAnimId = requestAnimationFrame(animateFireworks);
+        }
+
+        // On Load initializers
+        initCover();
+        checkProgress();
+    </script>
+</body>
+</html>
